@@ -4,11 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="google-site-verification" content="S8Xa8siFrkwN_l-AwvJYrgN7LzaUHJEhAKD_lsRj8xs" />
-<title>Image Compressor</title>
+<meta name="description" content="Compress images and videos online with support for JPG, PNG, WEBP and MP4. Reduce file sizes for the web and sharing without installing software.">
+<link rel="canonical" href="https://image-compressor-hzjj.onrender.com/">
+<meta property="og:title" content="Online Image and Video Compressor">
+<meta property="og:description" content="Compress JPG, PNG, WEBP and MP4 files online for web use and sharing, without installing software.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://image-compressor-hzjj.onrender.com/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Online Image and Video Compressor">
+<meta name="twitter:description" content="Compress images and videos online for smaller, shareable files without installing software.">
+<title>Online Image and Video Compressor</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;color:#172033}
 main{max-width:1400px;margin:70px auto;padding:24px}.tools-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.card{background:white;border:1px solid #e4e8f0;border-radius:22px;padding:32px;box-shadow:0 12px 40px rgba(20,30,50,.08)}
-h1{margin:0 0 8px;font-size:32px}p{color:#647084}.drop{margin-top:24px;border:2px dashed #b9c3d4;border-radius:18px;padding:42px;text-align:center;cursor:pointer}.drop:hover{background:#f8faff}
+h1{margin:0 0 24px;font-size:32px}h2{margin:0 0 8px;font-size:32px}p{color:#647084}.drop{margin-top:24px;border:2px dashed #b9c3d4;border-radius:18px;padding:42px;text-align:center;cursor:pointer}.drop:hover{background:#f8faff}
 button{margin-top:20px;border:0;border-radius:12px;padding:13px 20px;font-size:16px;cursor:pointer;background:#172033;color:white}
 select{margin-top:18px;width:100%;border:1px solid #d6dce7;border-radius:10px;padding:12px;font-size:15px;background:white;color:#172033}
 input[type=range]{width:100%;margin-top:12px;accent-color:var(--quality-color)}
@@ -19,18 +28,19 @@ input[type=range]{width:100%;margin-top:12px;accent-color:var(--quality-color)}
 #video-result{margin-top:24px;padding:16px;border-radius:14px;background:#f1f5f9;display:none;min-height:72px}
 #size-info{display:block;margin-top:14px;line-height:1.6}
 #result{margin-top:24px;padding:16px;border-radius:14px;background:#f1f5f9;display:none}.error{color:#b42318}.ok{color:#067647}
+.seo-content{margin-top:36px}.seo-content h2{font-size:26px}.seo-content p{line-height:1.7}.faq{margin-top:32px}.faq details{background:white;border:1px solid #e4e8f0;border-radius:12px;margin-top:10px;padding:0 18px}.faq summary{cursor:pointer;padding:16px 0;font-weight:600}.faq details p{margin:0 0 16px;line-height:1.6}
 small{color:#7b8494}
 @media (max-width:900px){main{margin:24px auto}.tools-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<main><div class="tools-grid"><div class="card">
-<h1>Compress your image</h1>
+<main><h1>Online Image and Video Compressor</h1><div class="tools-grid"><div class="card">
+<h2>Image Compressor</h2>
 <p>Reduce image size quickly. JPG, PNG, WEBP, GIF, BMP, TIFF, HEIC and AVIF up to 100 MB.</p>
-<div class="drop" id="drop">Click here to choose an image<br><small id="name">No file selected</small></div>
-<input id="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff,image/heic,image/heif,image/avif" hidden>
+<div class="drop" id="drop" role="button" aria-label="Choose an image file">Click here to choose an image<br><small id="name">No file selected</small></div>
+<input id="file" type="file" aria-label="Image file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff,image/heic,image/heif,image/avif" hidden>
 <label for="format">Output format</label>
-<select id="format">
+<select id="format" aria-label="Image output format">
 <option value="jpg">JPG</option>
 <option value="png">PNG</option>
 <option value="webp">WEBP</option>
@@ -42,26 +52,26 @@ small{color:#7b8494}
 </select>
 <small>Higher compression reduces colors or quality. JPG, WEBP, HEIC and AVIF usually give smaller photos.</small>
 <label for="compression">Compression strength: <strong id="compression-value">50%</strong></label>
-<input id="compression" type="range" min="0" max="90" value="50" step="5">
+<input id="compression" type="range" aria-label="Image compression strength" min="0" max="90" value="50" step="5">
 <small id="quality-info">Estimated quality loss: 0%</small>
 <small id="size-info">Choose an image to see its original and estimated output size.</small>
-<button id="go">Compress image</button>
+<button id="go" aria-label="Compress image">Compress image</button>
 <div id="result"></div>
 </div><div class="card">
-<h1>Compress your video</h1>
+<h2>Video Compressor</h2>
 <p>Reduce video size quickly. MP4, WEBM, MOV, MKV and AVI up to 1 GB.</p>
-<div class="drop" id="video-drop">Click here to choose a video<br><small id="video-name">No file selected</small></div>
-<input id="video-file" type="file" accept="video/*,.mp4,.webm,.mov,.mkv,.avi,.mpeg,.mpg,.wmv,.3gp,.3g2,.mts,.m2ts" hidden>
+<div class="drop" id="video-drop" role="button" aria-label="Choose a video file">Click here to choose a video<br><small id="video-name">No file selected</small></div>
+<input id="video-file" type="file" aria-label="Video file" accept="video/*,.mp4,.webm,.mov,.mkv,.avi,.mpeg,.mpg,.wmv,.3gp,.3g2,.mts,.m2ts" hidden>
 <label for="video-format">Output format</label>
-<select id="video-format"><option value="mp4">MP4</option><option value="webm">WEBM</option><option value="mov">MOV</option><option value="mkv">MKV</option><option value="avi">AVI</option></select>
+<select id="video-format" aria-label="Video output format"><option value="mp4">MP4</option><option value="webm">WEBM</option><option value="mov">MOV</option><option value="mkv">MKV</option><option value="avi">AVI</option></select>
 <small>MP4 works best for most devices. WEBM can be smaller for web use.</small>
 <label for="video-compression">Compression strength: <strong id="video-compression-value">50%</strong></label>
-<input id="video-compression" type="range" min="0" max="90" value="50" step="5">
+<input id="video-compression" type="range" aria-label="Video compression strength" min="0" max="90" value="50" step="5">
 <small id="video-quality-info">Estimated quality loss: 0%</small>
 <small id="video-size-info">Choose a video to see its original and estimated output size.</small>
-<button id="video-go">Compress video</button>
+<button id="video-go" aria-label="Compress video">Compress video</button>
 <div id="video-result"></div>
-</div></div></main>
+</div></div><section class="seo-content" aria-labelledby="about-compression"><h2 id="about-compression">Online file compression for images and videos</h2><p>Use this online image compressor and video compressor to reduce file sizes in your browser workflow. Image compression supports JPG, PNG, WEBP, GIF, BMP, TIFF, HEIC and AVIF, while video compression supports MP4, WEBM, MOV, MKV and AVI. Adjust the compression strength to find a practical balance between quality and size.</p><p>Compressing files online can make uploads faster and sharing easier, and can help prepare media for websites, stores, email and social platforms. You can reduce the size of an image or video without installing additional software, then download the compressed result for web use or sharing.</p></section><section class="faq" aria-labelledby="faq-heading"><h2 id="faq-heading">Frequently asked questions</h2><details><summary>What image formats can I compress?</summary><p>You can upload JPG, PNG, WEBP, GIF, BMP, TIFF, HEIC and AVIF files, then choose an available output format.</p></details><details><summary>What video formats are supported?</summary><p>The video tool accepts common formats including MP4, WEBM, MOV, MKV, AVI, MPEG, WMV, 3GP and M2TS. MP4 and WEBM are available as practical output choices.</p></details><details><summary>Will compression reduce image or video quality?</summary><p>Higher compression usually creates a smaller file and may reduce quality. Use the strength control to choose a balance that works for your intended web or sharing use.</p></details><details><summary>What are the file size limits?</summary><p>Images can be up to 100 MB and videos can be up to 1 GB, subject to the limits shown by the service.</p></details><details><summary>How do I compress a file?</summary><p>Choose or drop an image or video, select an output format and compression strength, then select the relevant compress button to download the result.</p></details></section></main>
 <script>
 const file=document.getElementById('file'), drop=document.getElementById('drop'), name=document.getElementById('name'), format=document.getElementById('format'), compression=document.getElementById('compression'), compressionValue=document.getElementById('compression-value'), qualityInfo=document.getElementById('quality-info'), sizeInfo=document.getElementById('size-info');
 document.documentElement.style.setProperty('--quality-color','#16803c');
