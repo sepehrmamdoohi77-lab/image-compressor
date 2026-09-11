@@ -71,6 +71,16 @@ const formatSize=bytes=>{
  return `${size.toFixed(unit?1:0)} ${units[unit]}`;
 };
 let estimateRequest=0;
+let estimateTimer=null;
+let estimateController=null;
+const ESTIMATE_DEBOUNCE_MS=350;
+const ESTIMATE_TIMEOUT_MS=30000;
+const cancelEstimate=()=>{
+ clearTimeout(estimateTimer);
+ estimateTimer=null;
+ estimateController?.abort();
+ estimateController=null;
+};
 const qualityLoss=()=>['png','gif','bmp','tiff'].includes(format.value)?Math.round((Number(compression.value)/90)**2*35):['jpg','heic','avif'].includes(format.value)?Math.round(Number(compression.value)*0.55):Math.round(Number(compression.value)*0.3);
 const updateQuality=()=>{
  const loss=qualityLoss();
@@ -81,26 +91,40 @@ const updateQuality=()=>{
  qualityInfo.textContent=`Estimated quality loss: ${loss}%${compression.value==='0'?' (lossless)':''}`;
 };
 updateQuality();
-const updateEstimate=async()=>{
- const selected=file.files[0];
- updateQuality();
- if(!selected){sizeInfo.textContent='Choose an image to see its original and estimated output size.';return}
- const requestId=++estimateRequest;
- sizeInfo.textContent='Calculating output size...';
+const runEstimate=async(selected,requestId)=>{
+ const controller=new AbortController();
+ estimateController=controller;
+ let timedOut=false;
+ const timeoutId=setTimeout(()=>{timedOut=true;controller.abort()},ESTIMATE_TIMEOUT_MS);
  const fd=new FormData(); fd.append('file',selected); fd.append('output_format',format.value); fd.append('compression_percent',compression.value);
  try{
-  const response=await fetch('/estimate',{method:'POST',body:fd});
+  const response=await fetch('/estimate',{method:'POST',body:fd,signal:controller.signal});
   const data=await response.json();
   if(requestId!==estimateRequest)return;
   if(!response.ok)throw new Error(data.detail||'Could not estimate output size.');
   sizeInfo.textContent=`Original: ${formatSize(data.original_size)} | Estimated output: ${formatSize(data.estimated_size)}`;
  }catch(error){
-  if(requestId===estimateRequest)sizeInfo.textContent=error.message;
+  if(requestId!==estimateRequest)return;
+  sizeInfo.textContent=timedOut||error.name==='AbortError'?'Estimate unavailable — compression will still work.':`Estimate unavailable — compression will still work.`;
+ }finally{
+  clearTimeout(timeoutId);
+  if(estimateController===controller)estimateController=null;
  }
+};
+const updateEstimate=(debounced=false)=>{
+ const selected=file.files[0];
+ updateQuality();
+ cancelEstimate();
+ const requestId=++estimateRequest;
+ if(!selected){sizeInfo.textContent='Choose an image to see its original and estimated output size.';return}
+ sizeInfo.textContent='Calculating output size...';
+ if(debounced){
+  estimateTimer=setTimeout(()=>{estimateTimer=null;runEstimate(selected,requestId)},ESTIMATE_DEBOUNCE_MS);
+ }else runEstimate(selected,requestId);
 };
 const showFile=()=>{name.textContent=file.files[0]?.name||'No file selected';updateEstimate()};
 file.onchange=showFile;
-compression.oninput=updateEstimate;
+compression.oninput=()=>updateEstimate(true);
 format.onchange=updateEstimate;
 ['dragenter','dragover'].forEach(eventName=>drop.addEventListener(eventName,event=>{
  event.preventDefault(); event.stopPropagation(); drop.classList.add('dragging');

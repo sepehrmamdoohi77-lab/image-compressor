@@ -1,5 +1,7 @@
 from pathlib import Path
 from urllib.parse import quote
+from collections import OrderedDict
+import hashlib
 import uuid
 from io import BytesIO
 import asyncio
@@ -31,6 +33,12 @@ UPLOAD_CHUNK_SIZE = 1024 * 1024
 OUTPUT_RETENTION_SECONDS = 60 * 60
 IMAGE_COMPRESSION_LIMIT = asyncio.Semaphore(2)
 VIDEO_COMPRESSION_LIMIT = asyncio.Semaphore(1)
+IMAGE_CACHE_TTL_SECONDS = 5 * 60
+IMAGE_CACHE_MAX_ENTRIES = 3
+IMAGE_CACHE_MAX_BYTES = 32 * 1024 * 1024
+IMAGE_CACHE_MAX_ENTRY_BYTES = 16 * 1024 * 1024
+image_cache: OrderedDict[str, tuple[float, bytes]] = OrderedDict()
+image_cache_bytes = 0
 IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif", "bmp", "tif", "tiff", "heic", "heif", "avif"}
 ALLOWED = {
     "image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif",
@@ -90,6 +98,53 @@ def quality_settings(output_format: str, compression_percent: int) -> tuple[int,
         return quality, 95 - quality
     quality_loss = round((compression_percent / 90) ** 2 * 35)
     return 100, quality_loss
+
+
+def image_cache_key(path: Path, content_type: str | None, output_format: str, compression_percent: int) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        while chunk := source.read(UPLOAD_CHUNK_SIZE):
+            digest.update(chunk)
+    return f"{digest.hexdigest()}:{content_type or ''}:{output_format}:{compression_percent}"
+
+
+def prune_image_cache(now: float | None = None) -> None:
+    global image_cache_bytes
+    current_time = time.monotonic() if now is None else now
+    expired_keys = [
+        key for key, (created_at, encoded) in image_cache.items()
+        if current_time - created_at >= IMAGE_CACHE_TTL_SECONDS
+    ]
+    for key in expired_keys:
+        _, encoded = image_cache.pop(key)
+        image_cache_bytes -= len(encoded)
+
+
+def get_cached_image(cache_key: str) -> bytes | None:
+    prune_image_cache()
+    cached = image_cache.pop(cache_key, None)
+    if cached is None:
+        return None
+    created_at, encoded = cached
+    image_cache[cache_key] = (created_at, encoded)
+    return encoded
+
+
+def cache_image(cache_key: str, encoded: bytes) -> None:
+    global image_cache_bytes
+    if len(encoded) > IMAGE_CACHE_MAX_ENTRY_BYTES:
+        return
+    prune_image_cache()
+    previous = image_cache.pop(cache_key, None)
+    if previous is not None:
+        image_cache_bytes -= len(previous[1])
+    image_cache[cache_key] = (time.monotonic(), encoded)
+    image_cache_bytes += len(encoded)
+    while image_cache and (
+        len(image_cache) > IMAGE_CACHE_MAX_ENTRIES or image_cache_bytes > IMAGE_CACHE_MAX_BYTES
+    ):
+        _, (_, evicted) = image_cache.popitem(last=False)
+        image_cache_bytes -= len(evicted)
 
 
 def encode_image(data: bytes | Path, content_type: str | None, output_format: str, compression_percent: int) -> bytes:
@@ -306,8 +361,12 @@ async def estimate(
     validate_compression(output_format, compression_percent)
     data, original_size = await read_upload(file)
     try:
+        cache_key = await asyncio.to_thread(
+            image_cache_key, data, file.content_type, output_format, compression_percent
+        )
         async with IMAGE_COMPRESSION_LIMIT:
             encoded = await asyncio.to_thread(encode_image, data, file.content_type, output_format, compression_percent)
+        cache_image(cache_key, encoded)
         return {
             "original_size": original_size,
             "estimated_size": len(encoded),
@@ -332,8 +391,13 @@ async def compress(
     output = OUTPUTS / f"{job_id}.{output_format}"
 
     try:
-        async with IMAGE_COMPRESSION_LIMIT:
-            encoded = await asyncio.to_thread(encode_image, data, file.content_type, output_format, compression_percent)
+        cache_key = await asyncio.to_thread(
+            image_cache_key, data, file.content_type, output_format, compression_percent
+        )
+        encoded = get_cached_image(cache_key)
+        if encoded is None:
+            async with IMAGE_COMPRESSION_LIMIT:
+                encoded = await asyncio.to_thread(encode_image, data, file.content_type, output_format, compression_percent)
         output.write_bytes(encoded)
 
         return {
