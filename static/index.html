@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Image Compressor</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;color:#172033}
+main{max-width:1400px;margin:70px auto;padding:24px}.tools-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.card{background:white;border:1px solid #e4e8f0;border-radius:22px;padding:32px;box-shadow:0 12px 40px rgba(20,30,50,.08)}
+h1{margin:0 0 8px;font-size:32px}p{color:#647084}.drop{margin-top:24px;border:2px dashed #b9c3d4;border-radius:18px;padding:42px;text-align:center;cursor:pointer}.drop:hover{background:#f8faff}
+button{margin-top:20px;border:0;border-radius:12px;padding:13px 20px;font-size:16px;cursor:pointer;background:#172033;color:white}
+select{margin-top:18px;width:100%;border:1px solid #d6dce7;border-radius:10px;padding:12px;font-size:15px;background:white;color:#172033}
+input[type=range]{width:100%;margin-top:12px;accent-color:var(--quality-color)}
+#quality-info{display:block;margin-top:8px;color:var(--quality-color);font-weight:600}
+#video-compression{accent-color:var(--video-quality-color)}
+#video-quality-info{display:block;margin-top:8px;color:var(--video-quality-color);font-weight:600}
+#video-size-info{display:block;margin-top:14px;line-height:1.6;min-height:44px}
+#video-result{margin-top:24px;padding:16px;border-radius:14px;background:#f1f5f9;display:none;min-height:72px}
+#size-info{display:block;margin-top:14px;line-height:1.6}
+#result{margin-top:24px;padding:16px;border-radius:14px;background:#f1f5f9;display:none}.error{color:#b42318}.ok{color:#067647}
+small{color:#7b8494}
+@media (max-width:900px){main{margin:24px auto}.tools-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main><div class="tools-grid"><div class="card">
+<h1>Compress your image</h1>
+<p>Reduce image size quickly. JPG, PNG, WEBP, GIF, BMP, TIFF, HEIC and AVIF up to 100 MB.</p>
+<div class="drop" id="drop">Click here to choose an image<br><small id="name">No file selected</small></div>
+<input id="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/tiff,image/heic,image/heif,image/avif" hidden>
+<label for="format">Output format</label>
+<select id="format">
+<option value="jpg">JPG</option>
+<option value="png">PNG</option>
+<option value="webp">WEBP</option>
+<option value="gif">GIF</option>
+<option value="bmp">BMP</option>
+<option value="tiff">TIFF</option>
+<option value="heic">HEIC</option>
+<option value="avif">AVIF</option>
+</select>
+<small>Higher compression reduces colors or quality. JPG, WEBP, HEIC and AVIF usually give smaller photos.</small>
+<label for="compression">Compression strength: <strong id="compression-value">50%</strong></label>
+<input id="compression" type="range" min="0" max="90" value="50" step="5">
+<small id="quality-info">Estimated quality loss: 0%</small>
+<small id="size-info">Choose an image to see its original and estimated output size.</small>
+<button id="go">Compress image</button>
+<div id="result"></div>
+</div><div class="card">
+<h1>Compress your video</h1>
+<p>Reduce video size quickly. MP4, WEBM, MOV, MKV and AVI up to 1 GB.</p>
+<div class="drop" id="video-drop">Click here to choose a video<br><small id="video-name">No file selected</small></div>
+<input id="video-file" type="file" accept="video/*,.mp4,.webm,.mov,.mkv,.avi,.mpeg,.mpg,.wmv,.3gp,.3g2,.mts,.m2ts" hidden>
+<label for="video-format">Output format</label>
+<select id="video-format"><option value="mp4">MP4</option><option value="webm">WEBM</option><option value="mov">MOV</option><option value="mkv">MKV</option><option value="avi">AVI</option></select>
+<small>MP4 works best for most devices. WEBM can be smaller for web use.</small>
+<label for="video-compression">Compression strength: <strong id="video-compression-value">50%</strong></label>
+<input id="video-compression" type="range" min="0" max="90" value="50" step="5">
+<small id="video-quality-info">Estimated quality loss: 0%</small>
+<small id="video-size-info">Choose a video to see its original and estimated output size.</small>
+<button id="video-go">Compress video</button>
+<div id="video-result"></div>
+</div></div></main>
+<script>
+const file=document.getElementById('file'), drop=document.getElementById('drop'), name=document.getElementById('name'), format=document.getElementById('format'), compression=document.getElementById('compression'), compressionValue=document.getElementById('compression-value'), qualityInfo=document.getElementById('quality-info'), sizeInfo=document.getElementById('size-info');
+document.documentElement.style.setProperty('--quality-color','#16803c');
+drop.onclick=()=>file.click();
+const formatSize=bytes=>{
+ const units=['B','KB','MB']; let size=bytes; let unit=0;
+ while(size>=1024&&unit<units.length-1){size/=1024;unit++}
+ return `${size.toFixed(unit?1:0)} ${units[unit]}`;
+};
+let estimateRequest=0;
+const qualityLoss=()=>['png','gif','bmp','tiff'].includes(format.value)?Math.round((Number(compression.value)/90)**2*35):['jpg','heic','avif'].includes(format.value)?Math.round(Number(compression.value)*0.55):Math.round(Number(compression.value)*0.3);
+const updateQuality=()=>{
+ const loss=qualityLoss();
+ const hue=loss===0?140:Math.max(0,120-loss*4);
+ const color=`hsl(${hue} 72% 36%)`;
+ document.documentElement.style.setProperty('--quality-color',color);
+ compressionValue.textContent=`${compression.value}%`;
+ qualityInfo.textContent=`Estimated quality loss: ${loss}%${compression.value==='0'?' (lossless)':''}`;
+};
+updateQuality();
+const updateEstimate=async()=>{
+ const selected=file.files[0];
+ updateQuality();
+ if(!selected){sizeInfo.textContent='Choose an image to see its original and estimated output size.';return}
+ const requestId=++estimateRequest;
+ sizeInfo.textContent='Calculating output size...';
+ const fd=new FormData(); fd.append('file',selected); fd.append('output_format',format.value); fd.append('compression_percent',compression.value);
+ try{
+  const response=await fetch('/estimate',{method:'POST',body:fd});
+  const data=await response.json();
+  if(requestId!==estimateRequest)return;
+  if(!response.ok)throw new Error(data.detail||'Could not estimate output size.');
+  sizeInfo.textContent=`Original: ${formatSize(data.original_size)} | Estimated output: ${formatSize(data.estimated_size)}`;
+ }catch(error){
+  if(requestId===estimateRequest)sizeInfo.textContent=error.message;
+ }
+};
+const showFile=()=>{name.textContent=file.files[0]?.name||'No file selected';updateEstimate()};
+file.onchange=showFile;
+compression.oninput=updateEstimate;
+format.onchange=updateEstimate;
+['dragenter','dragover'].forEach(eventName=>drop.addEventListener(eventName,event=>{
+ event.preventDefault(); event.stopPropagation(); drop.classList.add('dragging');
+}));
+['dragleave','drop'].forEach(eventName=>drop.addEventListener(eventName,event=>{
+ event.preventDefault(); event.stopPropagation(); drop.classList.remove('dragging');
+}));
+drop.ondrop=event=>{
+ const dropped=event.dataTransfer.files;
+ if(!dropped.length) return;
+ const transfer=new DataTransfer(); transfer.items.add(dropped[0]); file.files=transfer.files; showFile();
+};
+document.getElementById('go').onclick=async()=>{
+ const box=document.getElementById('result');
+ box.style.display='block'; box.className=''; box.textContent='';
+ if(!file.files[0]){box.className='error';box.textContent='Choose an image first.';return}
+ const fd=new FormData(); fd.append('file',file.files[0]);
+ fd.append('output_format',format.value);
+ fd.append('compression_percent',compression.value);
+ box.textContent='Compressing...';
+ try{
+  const r=await fetch('/compress',{method:'POST',body:fd});
+  const d=await r.json();
+  if(!r.ok) throw new Error(d.detail||'Something went wrong');
+  const old=(d.original_size/1024).toFixed(1), neu=(d.compressed_size/1024).toFixed(1);
+  const sizeChange=100-(d.compressed_size/d.original_size*100);
+  const sizeMessage=sizeChange>=0?`${sizeChange.toFixed(1)}% smaller`:`${Math.abs(sizeChange).toFixed(1)}% larger`;
+  box.className='ok';
+    box.innerHTML=`Done: ${old} KB → ${neu} KB (${sizeMessage})<br>Estimated quality loss: ${d.quality_loss_percent}%<br><a href="${d.download_url}"><button>Download compressed image</button></a>`;
+ }catch(e){box.className='error';box.textContent=e.message}
+};
+
+const videoFile=document.getElementById('video-file'), videoDrop=document.getElementById('video-drop'), videoName=document.getElementById('video-name'), videoFormat=document.getElementById('video-format'), videoCompression=document.getElementById('video-compression'), videoCompressionValue=document.getElementById('video-compression-value'), videoQualityInfo=document.getElementById('video-quality-info'), videoSizeInfo=document.getElementById('video-size-info');
+videoDrop.onclick=()=>videoFile.click();
+const videoQualityLoss=()=>Math.round(Number(videoCompression.value)*0.45);
+const updateVideoQuality=()=>{
+ const loss=videoQualityLoss();
+ const hue=Math.max(0,120-loss*3.2);
+ document.documentElement.style.setProperty('--video-quality-color',`hsl(${hue} 72% 36%)`);
+ videoCompressionValue.textContent=`${videoCompression.value}%`;
+ videoQualityInfo.textContent=`Estimated quality loss: ${loss}%`;
+};
+const updateVideoEstimate=()=>{
+ const selected=videoFile.files[0]; updateVideoQuality();
+ if(!selected){videoSizeInfo.textContent='Choose a video to see its original and estimated output size.';return}
+ const strength=Number(videoCompression.value)/90;
+ const formatFactor=videoFormat.value==='webm'?0.68:0.72;
+ const estimated=selected.size*Math.max(0.08,1-(strength*formatFactor));
+ videoSizeInfo.textContent=`Original: ${formatSize(selected.size)} | Approx. output: ${formatSize(estimated)}`;
+};
+const showVideo=()=>{videoName.textContent=videoFile.files[0]?.name||'No file selected';updateVideoEstimate()};
+videoFile.onchange=showVideo; videoCompression.oninput=updateVideoEstimate; videoFormat.onchange=updateVideoEstimate;
+['dragenter','dragover'].forEach(eventName=>videoDrop.addEventListener(eventName,event=>{event.preventDefault();event.stopPropagation();videoDrop.classList.add('dragging')}));
+['dragleave','drop'].forEach(eventName=>videoDrop.addEventListener(eventName,event=>{event.preventDefault();event.stopPropagation();videoDrop.classList.remove('dragging')}));
+videoDrop.ondrop=event=>{const dropped=event.dataTransfer.files;if(!dropped.length)return;const transfer=new DataTransfer();transfer.items.add(dropped[0]);videoFile.files=transfer.files;showVideo()};
+updateVideoQuality();
+document.getElementById('video-go').onclick=async()=>{
+ const box=document.getElementById('video-result'); box.style.display='block';box.className='';box.textContent='';
+ if(!videoFile.files[0]){box.className='error';box.textContent='Choose a video first.';return}
+ const fd=new FormData();fd.append('file',videoFile.files[0]);fd.append('output_format',videoFormat.value);fd.append('compression_percent',videoCompression.value);box.textContent='Compressing video...';
+ try{
+  const response=await fetch('/video-compress',{method:'POST',body:fd});const data=await response.json();if(!response.ok)throw new Error(data.detail||'Something went wrong');
+  const old=formatSize(data.original_size),fresh=formatSize(data.compressed_size),sizeChange=100-(data.compressed_size/data.original_size*100),sizeMessage=sizeChange>=0?`${sizeChange.toFixed(1)}% smaller`:`${Math.abs(sizeChange).toFixed(1)}% larger`;
+  box.className='ok';box.innerHTML=`Done: ${old} → ${fresh} (${sizeMessage})<br>Estimated quality loss: ${videoQualityLoss()}%<br><a href="${data.download_url}"><button>Download compressed video</button></a>`;
+ }catch(error){box.className='error';box.textContent=error.message}
+};
+</script>
+</body>
+</html>
