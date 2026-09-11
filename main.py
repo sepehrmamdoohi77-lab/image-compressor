@@ -352,6 +352,16 @@ def home():
     return (BASE / "static" / "index.html").read_text(encoding="utf-8")
 
 
+@app.get("/robots.txt", response_class=FileResponse)
+def robots():
+    return FileResponse(BASE / "static" / "robots.txt", media_type="text/plain")
+
+
+@app.get("/sitemap.xml", response_class=FileResponse)
+def sitemap():
+    return FileResponse(BASE / "static" / "sitemap.xml", media_type="application/xml")
+
+
 @app.post("/estimate")
 async def estimate(
     file: UploadFile = File(...),
