@@ -354,12 +354,20 @@ def home():
 
 @app.get("/robots.txt", response_class=FileResponse)
 def robots():
-    return FileResponse(BASE / "static" / "robots.txt", media_type="text/plain")
+    return FileResponse(
+        BASE / "static" / "robots.txt",
+        media_type="text/plain",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 @app.get("/sitemap.xml", response_class=FileResponse)
 def sitemap():
-    return FileResponse(BASE / "static" / "sitemap.xml", media_type="application/xml")
+    return FileResponse(
+        BASE / "static" / "sitemap.xml",
+        media_type="application/xml",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 @app.post("/estimate")
