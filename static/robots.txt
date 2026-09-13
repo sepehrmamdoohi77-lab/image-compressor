@@ -1,4 +1,3 @@
 User-agent: *
 Allow: /
-
 Sitemap: https://image-compressor-hzjj.onrender.com/sitemap.xml

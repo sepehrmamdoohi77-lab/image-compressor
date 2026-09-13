@@ -33,3 +33,8 @@ class SeoEndpointTests(unittest.TestCase):
         self.assertIn("User-agent: *", body)
         self.assertIn("Allow: /", body)
         self.assertIn(f"Sitemap: {SITEMAP_URL}", body)
+
+        directives = [line.strip() for line in body.splitlines() if line.strip()]
+        self.assertNotIn("Disallow: /", directives)
+        self.assertNotIn("User-agent: Googlebot", directives)
+        self.assertFalse(any(line.startswith("Disallow:") and line != "Disallow:" for line in directives))
