@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="/favicon.ico" type="image/svg+xml">
 <meta name="google-site-verification" content="S8Xa8siFrkwN_l-AwvJYrgN7LzaUHJEhAKD_lsRj8xs" />
 <meta name="description" content="Compress images and videos online with support for JPG, PNG, WEBP and MP4. Reduce file sizes for the web and sharing without installing software.">
 <link rel="canonical" href="https://image-compressor-hzjj.onrender.com/">
@@ -13,7 +14,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Online Image and Video Compressor">
 <meta name="twitter:description" content="Compress images and videos online for smaller, shareable files without installing software.">
-<title>Fluxo | Image and Video Compressor</title>
+<title>Fast Compress | Image and Video Compressor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -23,22 +24,24 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--white
 .shell{width:min(1200px,calc(100% - 48px));margin:auto}.navbar{height:80px;padding:0 24px;border:1px solid var(--border);border-radius:100px;background:var(--glass);backdrop-filter:blur(16px) saturate(180%);box-shadow:0 4px 30px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.05);position:sticky;top:24px;margin-top:24px;z-index:100;display:flex;align-items:center;gap:28px}.brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-size:19px;font-weight:700;letter-spacing:-.04em}.brand svg{width:27px;height:27px}.nav-links{display:flex;align-items:center;justify-content:center;gap:27px;flex:1}.nav-links a,.nav-actions a{color:var(--muted);font-size:13px;text-decoration:none;transition:color .2s}.nav-links a:hover,.nav-actions a:hover{color:#fff}.nav-links a{display:flex;align-items:center;gap:5px}.nav-links svg{width:13px}.nav-actions{display:flex;align-items:center;gap:20px}.button{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;color:#fff;text-decoration:none;cursor:pointer;font:600 13px Inter;border-radius:999px;padding:13px 19px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);box-shadow:0 8px 25px rgba(59,130,246,.2);transition:transform .2s,box-shadow .2s}.button:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(139,92,246,.35)}.hamburger{display:none;margin-left:auto;border:0;background:none;color:#fff;padding:8px;cursor:pointer}.hamburger svg{display:block;width:22px}.mobile-menu{display:none;position:absolute;top:calc(80px + 24px);left:0;width:100%;padding:18px;border:1px solid var(--border);border-radius:24px;background:rgba(10,10,12,.8);backdrop-filter:blur(16px) saturate(180%);box-shadow:0 20px 40px rgba(0,0,0,.3)}.mobile-menu.open{display:grid;gap:4px}.mobile-menu a{padding:13px;color:var(--muted);text-decoration:none;font-size:14px}.mobile-menu .button{color:#fff;text-align:center;margin-top:8px}
 .hero{padding:80px 0 60px;display:flex;flex-direction:column;align-items:center;text-align:center}.badge{display:flex;align-items:center;gap:9px;padding:6px 12px 6px 6px;border:1px solid rgba(255,255,255,.1);border-radius:999px;background:rgba(255,255,255,.03);color:var(--muted);font-size:11px}.badge strong{padding:5px 9px;border-radius:999px;background:rgba(124,58,237,.25);color:#c4b5fd;font-size:10px}.hero h1{max-width:820px;margin:24px 0 18px;font-size:4.5rem;line-height:1.1;letter-spacing:-.065em;font-weight:700}.gradient-text{background:linear-gradient(135deg,#60a5fa,#c084fc,#f472b6);background-clip:text;-webkit-background-clip:text;color:transparent}.hero p{max-width:600px;margin:0;color:var(--muted);font-size:1.25rem;line-height:1.65}.hero-ctas{display:flex;gap:12px;margin-top:31px}.glass-button{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);box-shadow:none}.glass-button:hover{background:rgba(255,255,255,.08);box-shadow:none}.proof{width:100%;margin-top:40px;padding:40px 0 80px;border-top:1px solid rgba(255,255,255,.05);text-align:center}.proof-label{margin:0 0 24px;color:var(--dim);font-size:12px}.logos{display:flex;justify-content:center;align-items:center;gap:48px;opacity:.6}.logos span{display:flex;align-items:center;gap:7px;color:#f4f4f5;font-size:15px;font-weight:600;transition:opacity .2s}.logos span:hover{opacity:1}.logos svg{width:20px;height:20px}.review{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:28px;color:var(--muted);font-size:12px}.stars{display:flex;gap:3px}.stars svg{width:14px;height:14px;fill:#eab308;color:#eab308}
 .tools{padding:0 0 60px}.tools h2{margin:0 0 8px;font-size:28px;letter-spacing:-.04em}.tools-intro{color:var(--muted);margin:0 0 25px}.tools-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.card{background:rgba(15,15,18,.72);border:1px solid var(--border);border-radius:18px;padding:25px;box-shadow:0 20px 70px rgba(0,0,0,.2);backdrop-filter:blur(12px)}.card p{color:var(--muted);line-height:1.6;font-size:13px}.drop{margin-top:22px;border:1px dashed rgba(255,255,255,.18);border-radius:13px;padding:31px;text-align:center;cursor:pointer;color:var(--muted);font-size:13px}.drop:hover,.drop.dragging{background:rgba(124,58,237,.1);border-color:#8b5cf6}button{margin-top:18px;border:0;border-radius:10px;padding:12px 18px;font:600 13px Inter;cursor:pointer;background:#fff;color:#09090b}select{margin-top:15px;width:100%;border:1px solid var(--border);border-radius:9px;padding:11px;font-size:13px;background:#111113;color:#fff}label{display:block;margin-top:18px;font-size:13px;color:#d4d4d8}input[type=range]{width:100%;margin-top:11px;accent-color:#8b5cf6}small{display:block;color:var(--dim);line-height:1.6;margin-top:8px}#quality-info,#video-quality-info{color:#a78bfa;font-weight:600}#video-result,#result{margin-top:20px;padding:14px;border-radius:10px;background:rgba(255,255,255,.06);display:none;line-height:1.7;font-size:13px}.error{color:#fda4af}.ok{color:#86efac}.seo-content,.faq{padding:25px 0 60px;color:var(--muted)}.seo-content h2,.faq h2{color:#fff;font-size:24px}.seo-content p,.faq details p{line-height:1.7}.faq details{border-bottom:1px solid var(--border);padding:16px 0}.faq summary{cursor:pointer;color:#fff}
-@media (max-width:1024px){.hero h1{font-size:3.8rem}.logos{gap:32px}}@media (max-width:768px){.shell{width:min(100% - 40px,600px)}.navbar{padding:0 20px}.nav-links,.nav-actions{display:none}.hamburger{display:block}.hero{padding-top:66px}.hero h1{font-size:3rem}.hero p{font-size:1.08rem}.hero-ctas{flex-direction:column;width:100%;max-width:320px}.hero-ctas .button{width:100%}.tools-grid{grid-template-columns:1fr}}@media (max-width:480px){.shell{width:calc(100% - 32px)}.navbar{height:68px;top:16px;margin-top:16px;padding:0 16px}.mobile-menu{top:calc(68px + 16px)}.hero{padding-top:55px}.hero h1{font-size:2.2rem;letter-spacing:-.055em}.hero p{font-size:.95rem}.badge{font-size:9px}.logos{gap:14px;justify-content:space-between}.logos span{font-size:10px;gap:3px}.logos svg{width:14px;height:14px}.review{flex-direction:column;gap:8px}.proof{padding-bottom:55px}.card{padding:20px}}
+@media (max-width:1024px){.hero h1{font-size:3.8rem}.logos{gap:32px}}@media (max-width:768px){.shell{width:min(100% - 40px,600px)}.navbar{padding:0 20px}.nav-links,.nav-actions{display:none}.hamburger{display:block}.hero{padding-top:66px}.hero h1{font-size:3rem}.hero p{font-size:1.08rem}.hero-ctas{flex-direction:column;width:100%;max-width:320px}.hero-ctas .button{width:100%}.tools-grid{grid-template-columns:1fr}.info-grid{grid-template-columns:1fr}}@media (max-width:480px){.shell{width:calc(100% - 32px)}.navbar{height:68px;top:16px;margin-top:16px;padding:0 16px}.mobile-menu{top:calc(68px + 16px)}.hero{padding-top:55px}.hero h1{font-size:2.2rem;letter-spacing:-.055em}.hero p{font-size:.95rem}.badge{font-size:9px}.logos{gap:14px;justify-content:space-between}.logos span{font-size:10px;gap:3px}.logos svg{width:14px;height:14px}.review{flex-direction:column;gap:8px}.proof{padding-bottom:55px}.card{padding:20px}}
+.info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;padding:15px 0 60px}.info-panel{padding:25px;border:1px solid var(--border);border-radius:18px;background:rgba(15,15,18,.6)}.info-panel h2{margin:0 0 10px;color:#fff;font-size:22px}.info-panel p,.info-panel li{color:var(--muted);line-height:1.7;font-size:13px}.info-panel ul{margin:14px 0 0;padding-left:20px}.account-modal{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.7);backdrop-filter:blur(12px)}.account-modal[hidden]{display:none}.account-dialog{position:relative;width:min(420px,100%);padding:28px;border:1px solid var(--border);border-radius:18px;background:#111114;box-shadow:0 24px 80px rgba(0,0,0,.45)}.account-dialog h2{margin:0 0 8px}.account-dialog p{color:var(--muted);font-size:13px;line-height:1.6}.account-dialog label{margin-top:15px}.account-dialog input{width:100%;margin-top:8px;border:1px solid var(--border);border-radius:9px;padding:12px;background:#09090b;color:#fff;font:13px Inter}.account-dialog button{width:100%;margin-top:20px}.modal-close{position:absolute;top:12px;right:14px;margin:0;padding:6px 10px;background:transparent;color:var(--muted);font-size:20px}.account-switch{display:flex;gap:8px;margin-top:18px}.account-switch button{margin:0;padding:9px;background:transparent;border:1px solid var(--border);color:var(--muted)}.account-switch button.active{background:rgba(124,58,237,.2);color:#fff;border-color:#8b5cf6}.account-status{margin:14px 0 0;color:#86efac;font-size:12px}.format-help{min-height:42px}
+.proof{display:none}.format-help{min-height:42px}
 </style>
 </head>
 <body>
 <canvas id="canvas" aria-hidden="true"></canvas>
 <nav class="navbar shell" aria-label="Main navigation">
-<a class="brand" href="#top" aria-label="Fluxo home"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><rect x="3" y="3" width="10" height="10" rx="2" fill="#a78bfa"/><rect x="15" y="3" width="10" height="10" rx="2" fill="#7c3aed"/><rect x="3" y="15" width="10" height="10" rx="2" fill="#6366f1"/><rect x="15" y="15" width="10" height="10" rx="2" fill="#3b82f6"/></svg>Fluxo</a>
-<div class="nav-links"><a href="#tools">Features</a><a href="#tools">Solutions <svg viewBox="0 0 12 12" fill="none"><path d="m3 4.5 3 3 3-3" stroke="currentColor" stroke-width="1.5"/></svg></a><a href="#tools">Pricing</a><a href="#tools">Resources <svg viewBox="0 0 12 12" fill="none"><path d="m3 4.5 3 3 3-3" stroke="currentColor" stroke-width="1.5"/></svg></a><a href="#faq-heading">Changelog</a></div>
-<div class="nav-actions"><a href="#tools">Log in</a><a class="button" href="#tools">Start for free <span aria-hidden="true">-&gt;</span></a></div>
+<a class="brand" href="#top" aria-label="Fast Compress home"><svg viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M14 3 6 7.5v9L14 21l8-4.5v-9L14 3Z" stroke="#a78bfa" stroke-width="1.8"/><path d="M10 12.5h8M14 9v7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="m11 24 3 2 3-2" stroke="#3b82f6" stroke-width="1.8" stroke-linecap="round"/></svg>Fast Compress</a>
+<div class="nav-links"><a href="#features">Features</a><a href="#solutions">Solutions <svg viewBox="0 0 12 12" fill="none"><path d="m3 4.5 3 3 3-3" stroke="currentColor" stroke-width="1.5"/></svg></a><a href="#pricing">Pricing</a><a href="#resources">Resources <svg viewBox="0 0 12 12" fill="none"><path d="m3 4.5 3 3 3-3" stroke="currentColor" stroke-width="1.5"/></svg></a><a href="#faq-heading">FAQ</a></div>
+<div class="nav-actions"><button id="auth-open" class="nav-login" type="button">Log in</button><a class="button" href="#tools">Start compressing <span aria-hidden="true">↓</span></a></div>
 <button class="hamburger" id="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
-<div class="mobile-menu" id="mobile-menu"><a href="#tools">Features</a><a href="#tools">Solutions</a><a href="#tools">Pricing</a><a href="#tools">Resources</a><a href="#faq-heading">Changelog</a><a class="button" href="#tools">Start for free <span aria-hidden="true">-&gt;</span></a></div>
+<div class="mobile-menu" id="mobile-menu"><a href="#features">Features</a><a href="#solutions">Solutions</a><a href="#pricing">Pricing</a><a href="#resources">Resources</a><a href="#faq-heading">FAQ</a><button id="mobile-auth-open" class="button" type="button">Log in / Create account</button></div>
 </nav>
 <main id="top" class="shell">
-<section class="hero" aria-labelledby="hero-title"><div class="badge"><strong>New</strong><span>AI Assistant is now live -&gt;</span></div><h1 id="hero-title">The all-in-one platform<br>to scale your <span class="gradient-text">SaaS</span></h1><p>Build, launch, and grow your SaaS faster with powerful tools,<br> beautiful analytics, and AI that works for you.</p><div class="hero-ctas"><a class="button" href="#tools">Start for free <span aria-hidden="true">-&gt;</span></a><a class="button glass-button" href="#tools">Book a demo</a></div></section>
+<section class="hero" aria-labelledby="hero-title"><h1 id="hero-title">Make every file <span class="gradient-text">lighter.</span><br>Keep every workflow moving.</h1><p>Fast Compress turns oversized images and videos into smaller, share-ready files in a few clicks.</p><div class="hero-ctas"><a class="button" href="#tools">Start compressing <span aria-hidden="true">↓</span></a></div></section>
 <section class="proof" aria-label="Social proof"><p class="proof-label">Trusted by 10,000+ teams worldwide</p><div class="logos"><span><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h7v7H4V5Zm9 0h7v7h-7V5ZM4 14h7v7H4v-7Z" fill="currentColor"/></svg>linear</span><span><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 6.1c-.8-1.3-2.1-2.1-3.7-2.1-1.1 0-2.2.4-3 1.1A5.6 5.6 0 0 0 9.8 4C6.6 4 4 6.6 4 9.8c0 2.5 1.6 4.7 3.9 5.5.5 2.7 2.9 4.7 5.7 4.7 2.6 0 4.8-1.7 5.5-4.1.5-.2.9-.5 1.2-.8A4.4 4.4 0 0 0 20.3 6.1Z"/></svg>loom</span><span><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z" stroke="currentColor" stroke-width="2"/><path d="m8 9 4 2.3L16 9M12 11.3V17" stroke="currentColor" stroke-width="2"/></svg>Remix</span><span><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2"/></svg>raycast</span><span><svg viewBox="0 0 24 24" fill="none"><path d="m5 5 14 14M19 5 5 19M12 3v18M3 12h18" stroke="currentColor" stroke-width="2"/></svg>tailwindcss</span></div><div class="review"><div class="stars" aria-label="Five stars"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></div><span>5.0/5 from 1,200+ reviews</span></div></section>
-<section class="tools" id="tools" aria-labelledby="tools-title"><h2 id="tools-title">Your media, made lighter.</h2><p class="tools-intro">Compress images and videos in seconds, without compromising your workflow.</p><div class="tools-grid"><div class="card">
+<section class="info-grid" aria-label="Fast Compress information"><article class="info-panel" id="features"><h2>Features for lighter files</h2><p>Everything you need to prepare media for websites, email, stores and sharing.</p><ul><li>Images: JPG, PNG, WEBP, GIF, BMP, TIFF, HEIC and AVIF.</li><li>Videos: MP4, WEBM, MOV, MKV and AVI with FFmpeg.</li><li>Adjustable compression with real output-size estimates.</li></ul></article><article class="info-panel" id="solutions"><h2>Solutions for everyday delivery</h2><p>Make product uploads smaller, speed up email attachments, and prepare responsive media without installing desktop software.</p><ul><li>Choose a target format for web compatibility.</li><li>Drag and drop files directly into the compressor.</li><li>Download a one-time, safely named result.</li></ul></article><article class="info-panel" id="pricing"><h2>Simple pricing</h2><p>Fast Compress is free to use for now. No account is required and there are no hidden checkout steps.</p><ul><li>Images up to 100 MB.</li><li>Videos up to 1 GB.</li><li>Optional account features can be added later.</li></ul></article><article class="info-panel" id="resources"><h2>Resources</h2><p>Use the FAQ below for format guidance and compression tips, then start directly from the tools above.</p><ul><li>Use JPG or WEBP for most photos.</li><li>Use PNG when transparency matters.</li><li>Use MP4 for broad video compatibility.</li></ul></article></section><section class="tools" id="tools" aria-labelledby="tools-title"><h2 id="tools-title">Your media, made lighter.</h2><p class="tools-intro">Compress images and videos in seconds, without compromising your workflow.</p><div class="tools-grid"><div class="card">
 <h2>Image Compressor</h2>
 <p>Reduce image size quickly. JPG, PNG, WEBP, GIF, BMP, TIFF, HEIC and AVIF up to 100 MB.</p>
 <div class="drop" id="drop" role="button" aria-label="Choose an image file">Click here to choose an image<br><small id="name">No file selected</small></div>
@@ -54,7 +57,7 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--white
 <option value="heic">HEIC</option>
 <option value="avif">AVIF</option>
 </select>
-<small>Higher compression reduces colors or quality. JPG, WEBP, HEIC and AVIF usually give smaller photos.</small>
+<small class="format-help">Higher compression reduces colors or quality. JPG, WEBP, HEIC and AVIF usually give smaller photos.</small>
 <label for="compression">Compression strength: <strong id="compression-value">50%</strong></label>
 <input id="compression" type="range" aria-label="Image compression strength" min="0" max="90" value="50" step="5">
 <small id="quality-info">Estimated quality loss: 0%</small>
@@ -68,7 +71,7 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--white
 <input id="video-file" type="file" aria-label="Video file" accept="video/*,.mp4,.webm,.mov,.mkv,.avi,.mpeg,.mpg,.wmv,.3gp,.3g2,.mts,.m2ts" hidden>
 <label for="video-format">Output format</label>
 <select id="video-format" aria-label="Video output format"><option value="mp4">MP4</option><option value="webm">WEBM</option><option value="mov">MOV</option><option value="mkv">MKV</option><option value="avi">AVI</option></select>
-<small>MP4 works best for most devices. WEBM can be smaller for web use.</small>
+<small class="format-help">MP4 works best for most devices. WEBM can be smaller for web use.</small>
 <label for="video-compression">Compression strength: <strong id="video-compression-value">50%</strong></label>
 <input id="video-compression" type="range" aria-label="Video compression strength" min="0" max="90" value="50" step="5">
 <small id="video-quality-info">Estimated quality loss: 0%</small>
@@ -76,6 +79,7 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--white
 <button id="video-go" aria-label="Compress video">Compress video</button>
 <div id="video-result"></div>
 </div></div><section class="seo-content" aria-labelledby="about-compression"><h2 id="about-compression">Online file compression for images and videos</h2><p>Use this online image compressor and video compressor to reduce file sizes in your browser workflow. Image compression supports JPG, PNG, WEBP, GIF, BMP, TIFF, HEIC and AVIF, while video compression supports MP4, WEBM, MOV, MKV and AVI. Adjust the compression strength to find a practical balance between quality and size.</p><p>Compressing files online can make uploads faster and sharing easier, and can help prepare media for websites, stores, email and social platforms. You can reduce the size of an image or video without installing additional software, then download the compressed result for web use or sharing.</p></section><section class="faq" aria-labelledby="faq-heading"><h2 id="faq-heading">Frequently asked questions</h2><details><summary>What image formats can I compress?</summary><p>You can upload JPG, PNG, WEBP, GIF, BMP, TIFF, HEIC and AVIF files, then choose an available output format.</p></details><details><summary>What video formats are supported?</summary><p>The video tool accepts common formats including MP4, WEBM, MOV, MKV, AVI, MPEG, WMV, 3GP and M2TS. MP4 and WEBM are available as practical output choices.</p></details><details><summary>Will compression reduce image or video quality?</summary><p>Higher compression usually creates a smaller file and may reduce quality. Use the strength control to choose a balance that works for your intended web or sharing use.</p></details><details><summary>What are the file size limits?</summary><p>Images can be up to 100 MB and videos can be up to 1 GB, subject to the limits shown by the service.</p></details><details><summary>How do I compress a file?</summary><p>Choose or drop an image or video, select an output format and compression strength, then select the relevant compress button to download the result.</p></details></section></main>
+<div class="account-modal" id="account-modal" hidden><div class="account-dialog" role="dialog" aria-modal="true" aria-labelledby="account-title"><button class="modal-close" id="account-close" type="button" aria-label="Close account dialog">×</button><h2 id="account-title">Your Fast Compress account</h2><p>Sign in to keep your preferences in this browser. An account is optional; compression works without one.</p><div class="account-switch"><button id="signin-mode" class="active" type="button">Log in</button><button id="signup-mode" type="button">Create account</button></div><form id="account-form"><label for="account-email">Email</label><input id="account-email" type="email" autocomplete="email" required><label for="account-password">Password</label><input id="account-password" type="password" autocomplete="current-password" minlength="6" required><button class="button" type="submit" id="account-submit">Log in</button></form><p class="account-status" id="account-status" aria-live="polite"></p></div></div>
 <script type="module">
 import TubesCursor from 'https://cdn.jsdelivr.net/npm/threejs-components@0.0.19/build/cursors/tubes1.min.js';
 TubesCursor(document.getElementById('canvas'), { tubes: { colors: ['#ff008a', '#8b5cf6', '#3b82f6', '#ffffff'], lights: { intensity: 50, colors: ['#ff008a', '#8b5cf6', '#3b82f6', '#ffffff'] } } });
@@ -104,7 +108,7 @@ const cancelEstimate=()=>{
  estimateController?.abort();
  estimateController=null;
 };
-const qualityLoss=()=>['png','gif','bmp','tiff'].includes(format.value)?Math.round((Number(compression.value)/90)**2*35):['jpg','heic','avif'].includes(format.value)?Math.round(Number(compression.value)*0.55):Math.round(Number(compression.value)*0.3);
+const qualityLoss=()=>['png','gif','bmp','tiff'].includes(format.value)?Math.round((Number(compression.value)/90)**2*35):format.value==='jpg'?95-Math.max(55,Math.round(95-Number(compression.value)*0.4)):['heic','avif'].includes(format.value)?Math.round(95-Math.max(35,Math.round(95-Number(compression.value)*0.55))):Math.round(Number(compression.value)*0.3);
 const updateQuality=()=>{
  const loss=qualityLoss();
  const hue=loss===0?140:Math.max(0,120-loss*4);
@@ -190,16 +194,52 @@ const updateVideoQuality=()=>{
  videoCompressionValue.textContent=`${videoCompression.value}%`;
  videoQualityInfo.textContent=`Estimated quality loss: ${loss}%`;
 };
-const updateVideoEstimate=()=>{
- const selected=videoFile.files[0]; updateVideoQuality();
- if(!selected){videoSizeInfo.textContent='Choose a video to see its original and estimated output size.';return}
- const strength=Number(videoCompression.value)/90;
- const formatFactor=videoFormat.value==='webm'?0.68:0.72;
- const estimated=selected.size*Math.max(0.08,1-(strength*formatFactor));
- videoSizeInfo.textContent=`Original: ${formatSize(selected.size)} | Approx. output: ${formatSize(estimated)}`;
+let videoEstimateRequest=0;
+let videoEstimateTimer=null;
+let videoEstimateController=null;
+const VIDEO_ESTIMATE_DEBOUNCE_MS=500;
+const VIDEO_ESTIMATE_TIMEOUT_MS=10*60*1000;
+const cancelVideoEstimate=()=>{
+ clearTimeout(videoEstimateTimer);
+ videoEstimateTimer=null;
+ videoEstimateController?.abort();
+ videoEstimateController=null;
 };
-const showVideo=()=>{videoName.textContent=videoFile.files[0]?.name||'No file selected';updateVideoEstimate()};
-videoFile.onchange=showVideo; videoCompression.oninput=updateVideoEstimate; videoFormat.onchange=updateVideoEstimate;
+const runVideoEstimate=async(selected,requestId)=>{
+ const controller=new AbortController();
+ videoEstimateController=controller;
+ const timeoutId=setTimeout(()=>controller.abort(),VIDEO_ESTIMATE_TIMEOUT_MS);
+ const fd=new FormData();
+ fd.append('file',selected);
+ fd.append('output_format',videoFormat.value);
+ fd.append('compression_percent',videoCompression.value);
+ try{
+  const response=await fetch('/video-estimate',{method:'POST',body:fd,signal:controller.signal});
+  const data=await response.json();
+  if(requestId!==videoEstimateRequest)return;
+  if(!response.ok)throw new Error(data.detail||'Could not estimate video output size.');
+  videoSizeInfo.textContent=`Original: ${formatSize(data.original_size)} | Estimated output: ${formatSize(data.estimated_size)}`;
+ }catch(error){
+  if(requestId!==videoEstimateRequest)return;
+  videoSizeInfo.textContent=error.name==='AbortError'?'Video estimate is taking too long. Compression can still continue.':(error.message||'Video estimate unavailable. Compression can still continue.');
+ }finally{
+  clearTimeout(timeoutId);
+  if(videoEstimateController===controller)videoEstimateController=null;
+ }
+};
+const updateVideoEstimate=(debounced=true)=>{
+ const selected=videoFile.files[0];
+ updateVideoQuality();
+ cancelVideoEstimate();
+ const requestId=++videoEstimateRequest;
+ if(!selected){videoSizeInfo.textContent='Choose a video to see its original and estimated output size.';return}
+ videoSizeInfo.textContent='Calculating actual output size with FFmpeg...';
+ if(debounced){
+  videoEstimateTimer=setTimeout(()=>{videoEstimateTimer=null;runVideoEstimate(selected,requestId)},VIDEO_ESTIMATE_DEBOUNCE_MS);
+ }else runVideoEstimate(selected,requestId);
+};
+const showVideo=()=>{videoName.textContent=videoFile.files[0]?.name||'No file selected';updateVideoEstimate(false)};
+videoFile.onchange=showVideo; videoCompression.oninput=()=>updateVideoEstimate(true); videoFormat.onchange=()=>updateVideoEstimate(true);
 ['dragenter','dragover'].forEach(eventName=>videoDrop.addEventListener(eventName,event=>{event.preventDefault();event.stopPropagation();videoDrop.classList.add('dragging')}));
 ['dragleave','drop'].forEach(eventName=>videoDrop.addEventListener(eventName,event=>{event.preventDefault();event.stopPropagation();videoDrop.classList.remove('dragging')}));
 videoDrop.ondrop=event=>{const dropped=event.dataTransfer.files;if(!dropped.length)return;const transfer=new DataTransfer();transfer.items.add(dropped[0]);videoFile.files=transfer.files;showVideo()};
@@ -214,6 +254,17 @@ document.getElementById('video-go').onclick=async()=>{
   box.className='ok';box.innerHTML=`Done: ${old} → ${fresh} (${sizeMessage})<br>Estimated quality loss: ${videoQualityLoss()}%<br><a href="${data.download_url}"><button>Download compressed video</button></a>`;
  }catch(error){box.className='error';box.textContent=error.message}
 };
+const accountModal=document.getElementById('account-modal'), accountForm=document.getElementById('account-form'), accountStatus=document.getElementById('account-status'), accountTitle=document.getElementById('account-title'), accountSubmit=document.getElementById('account-submit'), signinMode=document.getElementById('signin-mode'), signupMode=document.getElementById('signup-mode');
+let accountMode='signin';
+const openAccount=()=>{accountModal.hidden=false;document.getElementById('account-email').focus()};
+const closeAccount=()=>{accountModal.hidden=true;accountStatus.textContent=''};
+const updateAccountMode=mode=>{accountMode=mode;const signup=mode==='signup';signinMode.classList.toggle('active',!signup);signupMode.classList.toggle('active',signup);accountTitle.textContent=signup?'Create your Fast Compress account':'Your Fast Compress account';accountSubmit.textContent=signup?'Create account':'Log in';accountStatus.textContent=''};
+document.getElementById('auth-open').onclick=openAccount;
+document.getElementById('mobile-auth-open').onclick=()=>{mobileMenu.classList.remove('open');openAccount()};
+document.getElementById('account-close').onclick=closeAccount;
+accountModal.addEventListener('click',event=>{if(event.target===accountModal)closeAccount()});
+signinMode.onclick=()=>updateAccountMode('signin'); signupMode.onclick=()=>updateAccountMode('signup');
+accountForm.addEventListener('submit',event=>{event.preventDefault();const email=document.getElementById('account-email').value.trim().toLowerCase();const password=document.getElementById('account-password').value;const stored=JSON.parse(localStorage.getItem('fast-compress-account')||'null');if(accountMode==='signup'){localStorage.setItem('fast-compress-account',JSON.stringify({email,password}));accountStatus.textContent='Account created. You are now signed in.';return}if(!stored||stored.email!==email||stored.password!==password){accountStatus.textContent='No matching account found in this browser.';return}accountStatus.textContent='You are signed in.'});
 </script>
 </body>
 </html>

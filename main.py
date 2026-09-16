@@ -9,7 +9,7 @@ import subprocess
 import time
 import shutil
 
-from fastapi import FastAPI, File, Form, UploadFile, HTTPException
+from fastapi import FastAPI, File, Form, Request, UploadFile, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse
 from starlette.background import BackgroundTask
 from PIL import Image, UnidentifiedImageError
@@ -33,6 +33,9 @@ UPLOAD_CHUNK_SIZE = 1024 * 1024
 OUTPUT_RETENTION_SECONDS = 60 * 60
 IMAGE_COMPRESSION_LIMIT = asyncio.Semaphore(2)
 VIDEO_COMPRESSION_LIMIT = asyncio.Semaphore(1)
+VIDEO_RATE_LIMIT_WINDOW_SECONDS = 60
+VIDEO_RATE_LIMIT_REQUESTS = 3
+video_request_times: dict[str, list[float]] = {}
 IMAGE_CACHE_TTL_SECONDS = 5 * 60
 IMAGE_CACHE_MAX_ENTRIES = 3
 IMAGE_CACHE_MAX_BYTES = 32 * 1024 * 1024
@@ -264,6 +267,21 @@ def validate_video(output_format: str, compression_percent: int) -> None:
         raise HTTPException(400, "Video compression must be between 0 and 90 percent.")
 
 
+def enforce_video_rate_limit(request: Request) -> None:
+    client_host = request.client.host if request.client else "unknown"
+    now = time.monotonic()
+    recent_requests = [
+        started_at
+        for started_at in video_request_times.get(client_host, [])
+        if now - started_at < VIDEO_RATE_LIMIT_WINDOW_SECONDS
+    ]
+    if len(recent_requests) >= VIDEO_RATE_LIMIT_REQUESTS:
+        video_request_times[client_host] = recent_requests
+        raise HTTPException(429, "Too many video requests. Please try again shortly.")
+    recent_requests.append(now)
+    video_request_times[client_host] = recent_requests
+
+
 def compressed_video_filename(original_name: str | None, output_format: str) -> str:
     stem = Path(original_name or "video").stem
     safe_stem = "".join(char if char.isalnum() or char in "-_ ." else "_" for char in stem).strip()
@@ -320,6 +338,9 @@ def encode_video_file(
         if output_path.stat().st_size > source_size and content_type == VIDEO_FORMATS[output_format][0]:
             raise HTTPException(422, "This video is already highly compressed. Choose a higher compression level or another format.")
         return output_path
+    except subprocess.TimeoutExpired as exc:
+        output_path.unlink(missing_ok=True)
+        raise HTTPException(504, "Video processing took too long. Try a shorter or smaller video.") from exc
     finally:
         if isinstance(data, bytes):
             input_path.unlink(missing_ok=True)
@@ -350,6 +371,11 @@ async def encode_video_async(
 @app.get("/", response_class=HTMLResponse)
 def home():
     return (BASE / "static" / "index.html").read_text(encoding="utf-8")
+
+
+@app.get("/favicon.ico", response_class=FileResponse)
+def favicon():
+    return FileResponse(BASE / "static" / "favicon.svg", media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/robots.txt", response_class=FileResponse)
@@ -440,6 +466,7 @@ async def compress(
 
 @app.post("/video-estimate")
 async def video_estimate(
+    request: Request,
     file: UploadFile = File(...),
     output_format: str = Form("mp4"),
     compression_percent: int = Form(50),
@@ -458,10 +485,12 @@ async def video_estimate(
 
 @app.post("/video-compress")
 async def video_compress(
+    request: Request,
     file: UploadFile = File(...),
     output_format: str = Form("mp4"),
     compression_percent: int = Form(50),
 ):
+    enforce_video_rate_limit(request)
     validate_video(output_format, compression_percent)
     data, original_size = await read_video_upload(file)
     cleanup_old_outputs()
