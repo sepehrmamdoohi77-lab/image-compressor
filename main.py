@@ -12,7 +12,7 @@ import shutil
 from fastapi import FastAPI, File, Form, Request, UploadFile, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse
 from starlette.background import BackgroundTask
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 from pillow_heif import register_heif_opener
 import logging
 
@@ -40,6 +40,7 @@ IMAGE_CACHE_TTL_SECONDS = 5 * 60
 IMAGE_CACHE_MAX_ENTRIES = 3
 IMAGE_CACHE_MAX_BYTES = 32 * 1024 * 1024
 IMAGE_CACHE_MAX_ENTRY_BYTES = 16 * 1024 * 1024
+VIDEO_RATE_LIMIT_MAX_TRACKED_HOSTS = 1000
 image_cache: OrderedDict[str, tuple[float, bytes]] = OrderedDict()
 image_cache_bytes = 0
 IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif", "bmp", "tif", "tiff", "heic", "heif", "avif"}
@@ -150,43 +151,115 @@ def cache_image(cache_key: str, encoded: bytes) -> None:
         image_cache_bytes -= len(evicted)
 
 
+def read_source_bytes(data: bytes | Path) -> bytes:
+    return data if isinstance(data, bytes) else data.read_bytes()
+
+
+def has_transparency(img: Image.Image) -> bool:
+    return "A" in img.getbands() or (img.mode == "P" and "transparency" in img.info)
+
+
+def prepare_frame_for_format(img: Image.Image, pil_format: str) -> Image.Image:
+    if pil_format == "JPEG":
+        rgba = img.convert("RGBA")
+        bg = Image.new("RGB", rgba.size, "white")
+        bg.paste(rgba, mask=rgba.getchannel("A"))
+        return bg
+    if pil_format == "PNG":
+        return img.convert("RGBA") if has_transparency(img) else img.convert("RGB")
+    if pil_format in {"GIF", "BMP", "TIFF"}:
+        if img.mode in ("P", "L", "RGB", "RGBA"):
+            return img
+        return img.convert("RGBA") if has_transparency(img) else img.convert("RGB")
+    return img.convert("RGBA") if has_transparency(img) else img.convert("RGB")
+
+
+def encode_animated(
+    img: Image.Image,
+    data: bytes | Path,
+    content_type: str | None,
+    output_format: str,
+    compression_percent: int,
+    source_size: int,
+) -> bytes:
+    pil_format, mime = OUTPUT_FORMATS[output_format]
+    if pil_format not in {"GIF", "WEBP", "PNG"}:
+        raise HTTPException(
+            400,
+            "Animated images can only be exported as GIF, WEBP, or PNG.",
+        )
+    if compression_percent == 0 and content_type == mime:
+        original = read_source_bytes(data)
+        if len(original) <= source_size:
+            return original
+
+    frames = []
+    durations = []
+    try:
+        for frame_index in range(img.n_frames):
+            img.seek(frame_index)
+            frames.append(prepare_frame_for_format(img.copy(), pil_format))
+            durations.append(img.info.get("duration", 100))
+    except EOFError:
+        pass
+    if not frames:
+        raise HTTPException(400, "Uploaded file is not a valid image.")
+
+    save_options: dict = {
+        "save_all": True,
+        "append_images": frames[1:],
+        "duration": durations,
+        "loop": img.info.get("loop", 0),
+    }
+    if pil_format == "GIF":
+        save_options["optimize"] = True
+        save_options["disposal"] = 2
+    elif pil_format == "WEBP":
+        save_options["quality"] = max(65, round(95 - compression_percent * 0.3))
+        save_options["method"] = 6
+    else:  # APNG
+        save_options["optimize"] = True
+
+    buffer = BytesIO()
+    frames[0].save(buffer, pil_format, **save_options)
+    encoded = buffer.getvalue()
+    if len(encoded) > source_size and content_type == mime:
+        return read_source_bytes(data)
+    return encoded
+
+
 def encode_image(data: bytes | Path, content_type: str | None, output_format: str, compression_percent: int) -> bytes:
-    pil_format, _ = OUTPUT_FORMATS[output_format]
+    pil_format, mime = OUTPUT_FORMATS[output_format]
     source_size = len(data) if isinstance(data, bytes) else data.stat().st_size
     image_source = BytesIO(data) if isinstance(data, bytes) else data
     with Image.open(image_source) as img:
         if img.width * img.height > MAX_IMAGE_PIXELS:
             raise HTTPException(413, "Image dimensions are too large to process safely.")
-        if getattr(img, "is_animated", False):
-            img.seek(0)
-            img = img.convert("RGBA" if "A" in img.getbands() else "RGB")
-        if pil_format == "JPEG" and img.mode in ("RGBA", "LA", "P"):
-            bg = Image.new("RGB", img.size, "white")
-            if img.mode == "P":
-                img = img.convert("RGBA")
-            bg.paste(img, mask=img.getchannel("A") if "A" in img.getbands() else None)
-            img = bg
-        elif pil_format == "JPEG":
-            img = img.convert("RGB")
+        if getattr(img, "is_animated", False) and getattr(img, "n_frames", 1) > 1:
+            return encode_animated(img, data, content_type, output_format, compression_percent, source_size)
+
+        img = ImageOps.exif_transpose(img)
+
+        if compression_percent == 0 and content_type == mime and pil_format in {"PNG", "GIF", "BMP", "TIFF"}:
+            original = read_source_bytes(data)
+            if len(original) <= source_size:
+                return original
+
+        img = prepare_frame_for_format(img, pil_format)
 
         if pil_format == "PNG":
-            if img.mode not in ("RGBA", "RGB"):
-                img = img.convert("RGBA" if "A" in img.getbands() else "RGB")
             if compression_percent == 0:
-                if content_type == "image/png":
-                    return data if isinstance(data, bytes) else data.read_bytes()
                 buffer = BytesIO()
                 img.save(buffer, pil_format, optimize=True)
-                return buffer.getvalue()
-            color_loss = compression_percent / 90
-            quantize_method = Image.Quantize.FASTOCTREE if img.mode == "RGBA" else Image.Quantize.MEDIANCUT
-            requested_colors = max(2, round(256 - color_loss**2 * 224))
-            buffer = BytesIO()
-            img.quantize(colors=requested_colors, method=quantize_method).save(buffer, pil_format, optimize=True)
-            encoded = buffer.getvalue()
+                encoded = buffer.getvalue()
+            else:
+                color_loss = compression_percent / 90
+                quantize_method = Image.Quantize.FASTOCTREE if img.mode == "RGBA" else Image.Quantize.MEDIANCUT
+                requested_colors = max(2, round(256 - color_loss**2 * 224))
+                buffer = BytesIO()
+                img.quantize(colors=requested_colors, method=quantize_method).save(buffer, pil_format, optimize=True)
+                encoded = buffer.getvalue()
         elif pil_format in {"GIF", "BMP", "TIFF"}:
-            if img.mode not in ("P", "L", "RGB", "RGBA"):
-                img = img.convert("RGBA" if "A" in img.getbands() else "RGB")
             if compression_percent > 0 and img.mode in ("RGB", "RGBA"):
                 requested_colors = max(2, round(256 - (compression_percent / 90) ** 2 * 224))
                 quantize_method = Image.Quantize.FASTOCTREE if img.mode == "RGBA" else Image.Quantize.MEDIANCUT
@@ -218,8 +291,9 @@ def encode_image(data: bytes | Path, content_type: str | None, output_format: st
                 encoded = buffer.getvalue()
                 if len(encoded) <= source_size or quality == qualities[-1]:
                     break
-            if len(encoded) > source_size and content_type == OUTPUT_FORMATS[output_format][1] and isinstance(data, bytes):
-                return data
+
+        if len(encoded) > source_size and content_type == mime:
+            return read_source_bytes(data)
 
     return encoded
 
@@ -244,7 +318,7 @@ async def save_upload(file: UploadFile, allowed: set[str], extensions: set[str],
                 size += len(chunk)
                 if size > max_size:
                     raise HTTPException(413, f"Maximum upload size is {max_size // (1024 * 1024)} MB.")
-                destination.write(chunk)
+                await asyncio.to_thread(destination.write, chunk)
         return path, size
     except Exception:
         path.unlink(missing_ok=True)
@@ -280,6 +354,16 @@ def enforce_video_rate_limit(request: Request) -> None:
         raise HTTPException(429, "Too many video requests. Please try again shortly.")
     recent_requests.append(now)
     video_request_times[client_host] = recent_requests
+    # Prevent unbounded memory growth from many distinct client hosts.
+    stale_hosts = [
+        host for host, times in video_request_times.items()
+        if not times or now - times[-1] >= VIDEO_RATE_LIMIT_WINDOW_SECONDS
+    ]
+    for host in stale_hosts:
+        del video_request_times[host]
+    while len(video_request_times) > VIDEO_RATE_LIMIT_MAX_TRACKED_HOSTS:
+        oldest_host = min(video_request_times, key=lambda host: video_request_times[host][-1])
+        del video_request_times[oldest_host]
 
 
 def compressed_video_filename(original_name: str | None, output_format: str) -> str:
@@ -313,25 +397,45 @@ def encode_video_file(
 
     _, video_codec, audio_codec, mov_flag, mov_value = VIDEO_FORMATS[output_format]
     source_size = len(data) if isinstance(data, bytes) else data.stat().st_size
-    if compression_percent == 0 and content_type == VIDEO_FORMATS[output_format][0]:
-        if isinstance(data, bytes):
-            output_path.write_bytes(data)
-            return output_path
-        shutil.copyfile(data, output_path)
-        return output_path
-    crf = round(18 + compression_percent * 0.16) if output_format == "mp4" else round(24 + compression_percent * 0.18)
     input_path = data if isinstance(data, Path) else UPLOADS / f"{uuid.uuid4().hex}_video_input"
     if isinstance(data, bytes):
         input_path.write_bytes(data)
-    command = [
-        imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-i", str(input_path),
-        "-c:v", video_codec, "-crf", str(crf), "-preset", "medium",
-        "-c:a", audio_codec, "-b:a", "128k",
-    ]
-    if mov_flag:
-        command.extend([mov_flag, mov_value])
-    command.append(str(output_path))
     try:
+        if compression_percent == 0 and content_type == VIDEO_FORMATS[output_format][0]:
+            # Validate the file really is a video before passing it through.
+            probe = subprocess.run(
+                [
+                    imageio_ffmpeg.get_ffmpeg_exe(), "-v", "error",
+                    "-i", str(input_path), "-f", "null", "-",
+                ],
+                capture_output=True, text=True, timeout=120,
+            )
+            if probe.returncode != 0:
+                raise HTTPException(400, "Uploaded file is not a valid video.")
+            if isinstance(data, bytes):
+                output_path.write_bytes(data)
+            else:
+                shutil.copyfile(data, output_path)
+            return output_path
+
+        command = [
+            imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-i", str(input_path),
+            "-c:v", video_codec,
+        ]
+        if video_codec in {"libx264", "libvpx-vp9"}:
+            crf = round(18 + compression_percent * 0.16) if video_codec == "libx264" else round(24 + compression_percent * 0.18)
+            command.extend(["-crf", str(crf)])
+            if video_codec == "libx264":
+                command.extend(["-preset", "medium"])
+            else:
+                command.extend(["-b:v", "0", "-row-mt", "1"])
+        else:  # mpeg4 and other codecs without CRF support
+            video_bitrate = max(200, round(4000 * (1 - compression_percent / 100)))
+            command.extend(["-q:v", str(max(2, round(2 + compression_percent * 0.08)))])
+        command.extend(["-c:a", audio_codec, "-b:a", "128k"])
+        if mov_flag:
+            command.extend([mov_flag, mov_value])
+        command.append(str(output_path))
         completed = subprocess.run(command, capture_output=True, text=True, timeout=600)
         if completed.returncode != 0 or not output_path.is_file():
             raise HTTPException(400, "Could not process this video. Please check that the file is valid.")
@@ -341,6 +445,9 @@ def encode_video_file(
     except subprocess.TimeoutExpired as exc:
         output_path.unlink(missing_ok=True)
         raise HTTPException(504, "Video processing took too long. Try a shorter or smaller video.") from exc
+    except HTTPException:
+        output_path.unlink(missing_ok=True)
+        raise
     finally:
         if isinstance(data, bytes):
             input_path.unlink(missing_ok=True)
@@ -433,6 +540,7 @@ async def compress(
     job_id = uuid.uuid4().hex
     cleanup_old_outputs()
     output = OUTPUTS / f"{job_id}.{output_format}"
+    compressed_size = 0
 
     try:
         cache_key = await asyncio.to_thread(
@@ -442,7 +550,8 @@ async def compress(
         if encoded is None:
             async with IMAGE_COMPRESSION_LIMIT:
                 encoded = await asyncio.to_thread(encode_image, data, file.content_type, output_format, compression_percent)
-        output.write_bytes(encoded)
+        await asyncio.to_thread(output.write_bytes, encoded)
+        compressed_size = len(encoded)
 
         return {
             "original_size": original_size,
@@ -450,7 +559,7 @@ async def compress(
             "download_url": f"/download/{output.name}?name={quote(compressed_filename(file.filename, output_format))}",
             "output_format": output_format,
             "compression_percent": compression_percent,
-            "quality_loss_percent": 0 if original_size == len(encoded) and compression_percent == 0 else quality_settings(output_format, compression_percent)[1],
+            "quality_loss_percent": 0 if compression_percent == 0 and compressed_size >= original_size else quality_settings(output_format, compression_percent)[1],
         }
     except HTTPException:
         output.unlink(missing_ok=True)
@@ -471,6 +580,7 @@ async def video_estimate(
     output_format: str = Form("mp4"),
     compression_percent: int = Form(50),
 ):
+    enforce_video_rate_limit(request)
     validate_video(output_format, compression_percent)
     data, original_size = await read_video_upload(file)
     estimate_path = UPLOADS / f"{uuid.uuid4().hex}_video_estimate.{output_format}"
