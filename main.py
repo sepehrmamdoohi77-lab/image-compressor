@@ -16,6 +16,8 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from pillow_heif import register_heif_opener
 import logging
 
+from auth import router as auth_router
+
 BASE = Path(__file__).resolve().parent
 UPLOADS = BASE / "uploads"
 OUTPUTS = BASE / "outputs"
@@ -23,6 +25,7 @@ UPLOADS.mkdir(exist_ok=True)
 OUTPUTS.mkdir(exist_ok=True)
 
 app = FastAPI(title="Image Compressor MVP")
+app.include_router(auth_router)
 logger = logging.getLogger(__name__)
 register_heif_opener()
 

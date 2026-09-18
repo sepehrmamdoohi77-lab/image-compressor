@@ -4,3 +4,4 @@ uploads/
 outputs/
 *.pyc
 .env
+users.db

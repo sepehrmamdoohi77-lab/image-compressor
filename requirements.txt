@@ -4,3 +4,6 @@ python-multipart
 Pillow
 pillow-heif
 imageio-ffmpeg
+bcrypt
+python-jose[cryptography]
+email-validator
