@@ -5,3 +5,8 @@ outputs/
 *.pyc
 .env
 users.db
+
+# game (node/vite)
+node_modules/
+dist/
+*.local
