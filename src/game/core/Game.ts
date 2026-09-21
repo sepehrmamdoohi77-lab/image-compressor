@@ -20,7 +20,9 @@ import { SettingsManager } from '../systems/SettingsManager';
 import { ParticleSystem } from '../vfx/ParticleSystem';
 import { ThreatIndicator, type ThreatContact } from '../vfx/ThreatIndicator';
 import { AudioManager } from '../audio/AudioManager';
-import { CAMERA_CONFIG, ROUNDS, THREATS, WEAPON_ORDER, type EnemyArchetype } from '../data/config';
+import { PickupSystem } from '../systems/PickupSystem';
+import { bakeLevelLayer } from '../world/MapPlan';
+import { CAMERA_CONFIG, ROUNDS, THREATS, WEAPON_ORDER, type EnemyArchetype, RADAR } from '../data/config';
 import { clamp } from '../utils/math';
 
 // Per-frame scratch (no allocation in the hot loop).
@@ -53,6 +55,13 @@ export class Game {
   private controllers = new Map<number, AIController>();
   private corpses: { enemy: Enemy; removeAt: number }[] = [];
   private threatContacts: ThreatContact[] = [];
+  private pickups: PickupSystem | null = null;
+  private radarLayer: HTMLCanvasElement | null = null;
+  private resupplyFade = 0;
+  private medkitsUsed = 0;
+  private lastHeal = 0;
+  private weaponContacts: { x: number; z: number; weight: number }[] = [];
+  private radarPickupSpots: { x: number; z: number }[] = [];
 
   private container: HTMLElement | null = null;
   private rafId = 0;
@@ -152,6 +161,8 @@ export class Game {
 
     this.particles = new ParticleSystem(this.scene);
     this.threats = new ThreatIndicator(this.scene);
+    // Radar background: the level plan baked once (one pixel cell per world unit).
+    this.radarLayer = bakeLevelLayer((cx: number, cz: number) => this.level?.isWalkableCell(cx, cz) ?? false);
     this.cover = new CoverSystem(this.level);
     this.player = new Player(this.mats, this.geos);
     this.player.reset(this.level.playerSpawn);
@@ -166,6 +177,7 @@ export class Game {
       this.scene, this.level, this.particles, this.audio, this.combat, this.player.pos,
     );
     this.spawns = new SpawnSystem(this.level);
+    this.pickups = new PickupSystem(this.scene, this.level, this.mats, this.geos);
 
     this.input.attach(container);
     window.addEventListener('resize', this.onResize);
@@ -222,6 +234,8 @@ export class Game {
     this.clearRunEntities();
     this.threats?.dispose();
     this.threats = null;
+    this.pickups?.dispose();
+    this.pickups = null;
     // Environment (PMREM cube) + sky background textures are owned by the game.
     this.scene.environment?.dispose();
     this.scene.environment = null;
@@ -324,12 +338,15 @@ export class Game {
   }
 
   private beginRound(index: number): void {
+    this.pickups?.beginRun(this.gameTime);
     this.progression.beginRound(index);
     const round = ROUNDS[index];
     this.spawns?.startRound(round);
     this.roundBannerUntil = this.gameTime + 3.2;
     this.events.emit('round-start', { index, label: round.label, briefing: round.briefing });
-    this.player?.refillForRound();
+    // Round resupply: full health, full magazines, topped-up reserves.
+    this.player?.resupply();
+    this.resupplyFade = 1;
   }
 
   pause(): void {
@@ -374,6 +391,8 @@ export class Game {
     this.spawns?.clear();
     this.threats?.clear();
     this.threatContacts.length = 0;
+    this.pickups?.clear();
+    this.resupplyFade = 0;
     this.damageFlash = 0;
     this.lastHitmarkerAt = 0;
   }
@@ -480,7 +499,10 @@ export class Game {
     // Grenades.
     this.grenades.update(dt, now, p, this.enemies, (e) => this.onEnemyKilled(e, 'grenade', false, now));
 
-    // Corpses cleanup.
+    // Corpses: keep animating the fall, then clean up.
+    for (let i = this.corpses.length - 1; i >= 0; i--) {
+      this.corpses[i].enemy.updateVisual(dt);
+    }
     for (let i = this.corpses.length - 1; i >= 0; i--) {
       if (now >= this.corpses[i].removeAt) {
         const c = this.corpses[i];
@@ -541,6 +563,16 @@ export class Game {
     this.squad.prune(now);
     this.particles?.setFocus(p.pos.x, p.pos.z);
     this.updateThreats(dt, p);
+
+    // Field medkits: the squad drops resupply crates, walking over one heals.
+    const healed = this.pickups?.update(dt, now, p);
+    if (healed) {
+      this.medkitsUsed++;
+      this.lastHeal = healed.amount;
+      this.audio.playPickup();
+      this.events.emit('pickup', { kind: 'health', amount: healed.amount, total: healed.total });
+    }
+    this.resupplyFade = Math.max(0, this.resupplyFade - dt * 0.4);
     this.particles?.update(dt);
   }
 
@@ -683,7 +715,44 @@ export class Game {
       threatDistance: Number.isFinite(this.threats?.current.nearest ?? Infinity)
         ? (this.threats?.current.nearest ?? 0)
         : -1,
+      // Radar minimap: blips only carry information while the danger line is up.
+      radarLayer: this.radarLayer,
+      radarYaw: p?.yaw ?? 0,
+      radarPlayerX: p?.pos.x ?? 0,
+      radarPlayerZ: p?.pos.z ?? 0,
+      // Slice: the snapshot must own its lists (the source array is pooled).
+      radarContacts: this.radarContacts().slice(),
+      radarPickups: (this.pickups?.spots ?? this.radarPickupSpots).slice(),
+      resupplyFade: this.resupplyFade,
+      medkitsUsed: this.medkitsUsed,
+      lastHeal: this.lastHeal,
     };
+  }
+
+  /**
+   * Hostile blips for the radar. Only populated while the danger line is active:
+   * the radar is a threat read-out, not a wallhack — silent campers stay hidden.
+   */
+  private radarContacts(): { x: number; z: number; weight: number }[] {
+    const out = this.weaponContacts;
+    out.length = 0;
+    const level = this.threats?.current.level ?? 0;
+    if (level <= 0.02 || !this.player) return out;
+    const px = this.player.pos.x;
+    const pz = this.player.pos.z;
+    for (const e of this.enemies) {
+      if (!e.alive) continue;
+      const d = Math.hypot(e.pos.x - px, e.pos.z - pz);
+      if (d > RADAR.blipRange) continue;
+      const weight = (1 - d / RADAR.blipRange) * (0.45 + 0.55 * e.ai.confidence);
+      out.push({ x: e.pos.x, z: e.pos.z, weight: clamp(weight, 0, 1) });
+    }
+    return out;
+  }
+
+  /** Baked level plan for the radar (null before init). */
+  getRadarLayer(): HTMLCanvasElement | null {
+    return this.radarLayer;
   }
 
   private estimateSpreadPx(): number {

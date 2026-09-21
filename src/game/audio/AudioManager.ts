@@ -225,6 +225,13 @@ export class AudioManager {
     if (headshot) this.tone(this.sfxBus, 1760, 1760, 0.07, 'square', 0.2, 0, 0.05);
   }
 
+  /** Medkit pickup: bright two-note confirmation + strap/velcro rustle. */
+  playPickup(): void {
+    this.tone(this.sfxBus, 660, 990, 0.09, 'triangle', 0.26);
+    this.tone(this.sfxBus, 990, 1320, 0.1, 'triangle', 0.2, 0, 0.08);
+    this.noise(this.sfxBus, 0.12, 2600, 'bandpass', 0.16, 0, 0.02);
+  }
+
   playKill(): void {
     this.tone(this.sfxBus, 520, 780, 0.12, 'triangle', 0.3);
   }

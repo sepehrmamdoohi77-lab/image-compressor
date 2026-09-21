@@ -38,6 +38,7 @@ npm test         # unit + headless full-game integration tests
 | R | Reload (auto-reloads on empty trigger) |
 | G | Throw grenade at cursor |
 | C / Ctrl (hold) | Crouch: break line of sight behind low cover, steadier shots |
+| Shift (hold) | Sprint: much faster, weapon lowered to a carry, loud, cannot aim |
 | 1–5 / TAB | Weapons: Rifle · SMG · Shotgun · DMR · Pistol |
 | Wheel | Camera zoom |
 | Q / E | Rotate camera |
@@ -46,23 +47,30 @@ npm test         # unit + headless full-game integration tests
 Hostiles closing in are telegraphed without breaking the fiction: a **red streak
 is drawn on the ground toward each nearby threat** (pulsing ring at their feet),
 the screen edge glows red and a chevron points at the nearest one — no wallhack,
-the streak is drawn from you toward where they are.
+the streak is drawn from you toward where they are. The **top-right radar** shows
+those hostiles as red blips (only while the danger line is up) plus health kits as
+green crosses, drawn from the level plan and rotated to your facing.
+
+Between waves the squad **resupplies you**: full health, every magazine reloaded,
+reserves topped up, fresh grenades and armor. During a round, **health kits** drop
+at random open spots — walk over one to restore **30% health** (a kit is only
+consumed when you actually need it).
 
 ## What is implemented
 
-- **Tactical camera** — 46°/45° low-tilt isometric rig (lower angle = better sight-lines on hostiles), smooth follow, aim lookahead, zoom, trauma shake, firing kicks.
+- **Tactical camera** — 40°/45° low-tilt isometric rig (lowered twice: 55° → 46° → 40°, so hostiles read against the skyline), smooth follow, aim lookahead, zoom, trauma shake, firing kicks.
 - **Hand-designed 44×44m arena** — 4 enterable structures, plaza, checkpoint gate, chokepoints, flank routes, cover chains, defensive lines.
 - **5 data-driven weapons** — distinct damage, RPM, mag, reload, recoil, spread, falloff, pellets, tracers, **unique silhouettes** (own receiver/barrel/mag/optic/stock, own furniture colours) and **layered per-gun sound signatures**; the soldier holds every weapon **two-handed**, support hand on that weapon's own grip point.
 - **Central damage pipeline** — hit zones (head/torso/arms/legs), distance falloff, armor mitigation, grenade LOS-gated radials.
 - **4 enemy archetypes** — Rifleman, Assault, Heavy, Support: distinct HP/armor/weapon/accuracy/speed/aggression/preferred range.
 - **Human gunnery** — enemies apply cone error that grows with range/movement/adrenaline *and* throw an occasional deliberate near miss that cracks past your head (whiz + camera shake) instead of always connecting.
-- **Squad AI** — vision cones + LOS, hearing, decaying memory, shared approximate intel, FSM tactics: patrol, investigate, search, engage, cover (crouch + pop-up rhythm), flank, retreat, reload, hit reactions.
+- **Squad AI** — vision cones + LOS, hearing, decaying memory, shared approximate intel, FSM tactics: patrol, investigate, search, engage, cover, flank, retreat, reload, hit reactions. Cover discipline reads like soldiers: **lean out on alternating shoulders to fire, duck back when shot at, re-check whether the position is still shielded, relocate when flanked or shot up, and never camp the same sandbag twice**.
 - **A\* navigation** on the tactical grid with path smoothing, separation, stuck recovery.
 - **Grenades** — ballistic throw, bounce, fuse, LOS-gated explosion, self-damage.
-- **VFX + audio** — pooled particles/tracers/flash-lights, drifting ambient dust, proximity danger streaks, fully synthesized positional Web Audio (per-weapon shot layering, per-weapon reloads, bullet whiz-by), 4-bus mixer.
-- **Graphics** — procedurally baked surface textures (concrete, asphalt, gravel, hessian, crate grain, scuffed metal), equirect dusk sky used as background + image-based lighting (PMREM), key/rim/hemisphere lighting with 4096 shadows on High, roof parapets, sandbag stacks, puddles, hazard markings and cable runs in the level.
+- **VFX + audio** — pooled particles/tracers/flash-lights, drifting ambient dust, proximity danger streaks, **two-stage death collapse** (impact recoil → fold → topple to one side, limbs going slack), fully synthesized positional Web Audio (per-weapon shot layering, per-weapon reloads, bullet whiz-by, medkit pickup), 4-bus mixer.
+- **Graphics** — procedurally baked surface textures (concrete, asphalt, gravel, hessian, crate grain, scuffed metal, **camo fabric for uniforms**), equirect dusk sky used as background + image-based lighting (PMREM), key/rim/hemisphere lighting with 4096 shadows on High, and a dressed map: roof parapets and AC/antenna kit, kerbs, lamp posts with emissive heads, sandbag stacks, gravel piles, puddles, hazard chevrons, road markings, tire stacks, concrete barriers, tarped supply piles, cable runs and rubble scatter.
 - **Complete flow** — menu → briefing → 5 rounds → victory/defeat → stats → restart; pause, settings (all functional), localStorage with corruption recovery.
-- **78 automated tests** — damage, weapons, navigation, cover, spawning, progression, settings, plus headless full-game integration (menu → victory / defeat / pause / restart / danger telegraph with zero console errors) and a presentation suite (camera framing, two-handed grip, weapon identity, enemy fallibility).
+- **95 automated tests** — damage, weapons, navigation, cover, spawning, progression, settings, sprint, round resupply, medkits and radar, plus headless full-game integration (menu → victory / defeat / pause / restart / danger telegraph / radar blips / resupply with zero console errors) and a presentation suite (camera framing, two-handed grip, weapon identity, enemy fallibility, animation states incl. the death collapse).
 
 ## Documentation
 

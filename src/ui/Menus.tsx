@@ -39,9 +39,11 @@ export function MainMenu({ game, onSettings, onHelp }: { game: Game; onSettings:
           <span><b>R</b> reload</span>
           <span><b>G</b> grenade</span>
           <span><b>C</b> crouch</span>
+          <span><b>SHIFT</b> sprint</span>
           <span><b>Q / E</b> rotate cam</span>
           <span><b>TAB</b> cycle weapon</span>
           <span><b>RED LINE</b> danger bearing</span>
+          <span><b>RADAR</b> threat blips</span>
         </div>
       </div>
       <div className="menu-right">
@@ -162,7 +164,11 @@ export function HowToPlay({ onClose }: { onClose: () => void }): JSX.Element {
           <div><b>COVER</b> — Concrete blocks sight and fire. Crouch behind crates and sandbags to break line of sight.</div>
           <div><b>ENEMIES</b> — They see, hear, remember, share intel, take cover, flank and retreat — and like any marksman they miss, so listen for rounds cracking past you.</div>
           <div><b>WEAPONS</b> — Rifle: balanced. SMG: close shredder. Shotgun: delete things nearby. DMR: precise power. Pistol: fast backup. Every gun has its own recoil, report and silhouette.</div>
-          <div><b>DANGER</b> — When hostiles close in, a red streak is drawn on the ground toward each threat, with a pulsing ring at their feet. The screen edge and chevron point at the nearest one.</div>
+          <div><b>DANGER</b> — When hostiles close in, a red streak is drawn on the ground toward each threat, with a pulsing ring at their feet. The screen edge and chevron point at the nearest one, and the top-right radar shows their blips while the line is up.</div>
+          <div><b>RADAR</b> — The minimap is drawn from the level plan and follows your facing. Red blips are live hostiles inside the danger band; green crosses are health kits.</div>
+          <div><b>MEDKITS</b> — The squad drops resupply crates at random spots around the compound. Walk over one to restore 30% health — it is only consumed when you actually need it.</div>
+          <div><b>RESUPPLY</b> — Every new round tops you back up: full health, every magazine reloaded, reserves refilled, fresh grenades and armor.</div>
+          <div><b>SPRINT</b> — Hold <b>SHIFT</b> to run: much faster, weapon lowered to a carry, but you are loud and cannot aim while sprinting.</div>
         </div>
         <div className="menu-buttons row">
           <Btn label="BACK" primary onClick={onClose} />

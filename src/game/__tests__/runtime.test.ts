@@ -47,14 +47,45 @@ function installDomStubs(): void {
     removeItem: (k: string): void => void store.delete(k),
     clear: (): void => store.clear(),
   };
+  // Minimal 2D context: enough for the procedural textures and the radar bake.
+  const fake2d = (): Record<string, unknown> => {
+    const noop = (): undefined => undefined;
+    const gradient = { addColorStop: noop };
+    return {
+      createRadialGradient: () => gradient,
+      createLinearGradient: () => gradient,
+      createImageData: (w: number, h: number) => ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4) }),
+      putImageData: noop,
+      getImageData: (x: number, y: number, w: number, h: number) => ({ width: w, height: h, data: new Uint8ClampedArray(w * h * 4) }),
+      fillRect: noop,
+      clearRect: noop,
+      strokeRect: noop,
+      beginPath: noop,
+      closePath: noop,
+      moveTo: noop,
+      lineTo: noop,
+      arc: noop,
+      fill: noop,
+      stroke: noop,
+      save: noop,
+      restore: noop,
+      clip: noop,
+      translate: noop,
+      rotate: noop,
+      scale: noop,
+      drawImage: noop,
+      fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 1,
+      globalAlpha: 1,
+      shadowBlur: 0,
+      shadowColor: '',
+    };
+  };
   const fakeCanvas = (): unknown => ({
     width: 64,
     height: 64,
-    getContext: () => ({
-      createRadialGradient: () => ({ addColorStop: () => undefined }),
-      fillRect: () => undefined,
-      fillStyle: '',
-    }),
+    getContext: () => fake2d(),
   });
   (globalThis as Record<string, unknown>).window = {
     innerWidth: 1280,
@@ -310,6 +341,70 @@ describe('full game runtime', () => {
     expect(snap.threatDistance).toBeLessThan(20);
     expect(Number.isFinite(snap.threatAngleDeg)).toBe(true);
     expect(Math.abs(snap.threatAngleDeg)).toBeLessThanOrEqual(180);
+
+    // Radar: the blip list mirrors the danger channel (dark before, live after).
+    expect(clear.radarContacts.length).toBe(0);
+    expect(snap.radarContacts.length).toBeGreaterThan(0);
+    for (const c of snap.radarContacts) {
+      expect(Number.isFinite(c.x)).toBe(true);
+      expect(Number.isFinite(c.z)).toBe(true);
+      expect(c.weight).toBeGreaterThanOrEqual(0);
+      expect(c.weight).toBeLessThanOrEqual(1);
+    }
+    // Radar is drawn facing-up around the player.
+    expect(Number.isFinite(snap.radarYaw)).toBe(true);
+    expect(Number.isFinite(snap.radarPlayerX)).toBe(true);
+    expect(Number.isFinite(snap.radarPlayerZ)).toBe(true);
+    expect(snap.radarLayer).not.toBeNull();
+  });
+
+  it('resupplies health and ammo on every round change', () => {
+    game.startRun();
+    frames(120);
+    const gg = game as unknown as {
+      player: {
+        health: number; armor: number; grenades: number;
+        weapons: Map<string, { magAmmo: number; reserveAmmo: number; def: { magSize: number } }>;
+      };
+      beginRound: (index: number) => void;
+    };
+    const p = gg.player;
+    p.health = 17;
+    p.armor = 3;
+    p.grenades = 0;
+    for (const w of p.weapons.values()) {
+      w.magAmmo = 0;
+      w.reserveAmmo = 0;
+    }
+    const before = game.getSnapshot();
+    expect(before.health).toBe(17);
+
+    gg.beginRound(1);
+    const snap = game.getSnapshot();
+    expect(snap.health).toBe(snap.maxHealth);
+    expect(snap.grenades).toBeGreaterThan(0);
+    expect(snap.armor).toBeGreaterThan(3);
+    expect(snap.magAmmo).toBeGreaterThan(0);
+    expect(snap.reserveAmmo).toBeGreaterThan(0);
+    // The HUD gets a short "resupplied" notice to fade out.
+    expect(snap.resupplyFade).toBeGreaterThan(0);
+    frames(60);
+    expect(game.getSnapshot().resupplyFade).toBeLessThan(snap.resupplyFade);
+  });
+
+  it('drops medkits on the map during a round', () => {
+    game.startRun();
+    // Kits start dropping a few seconds in; walk the clock a while.
+    let seen = 0;
+    for (let i = 0; i < 40; i++) {
+      frames(30);
+      seen = Math.max(seen, game.getSnapshot().radarPickups.length);
+      if (seen > 0) break;
+    }
+    expect(seen).toBeGreaterThan(0);
+    const kit = game.getSnapshot().radarPickups[0];
+    expect(Number.isFinite(kit.x)).toBe(true);
+    expect(Number.isFinite(kit.z)).toBe(true);
   });
 
   it('restart after death restores standing pose; Q/E rotate the camera', () => {

@@ -34,10 +34,14 @@ export interface MaterialLib {
   accent: THREE.MeshStandardMaterial;
   lampEmissive: THREE.MeshStandardMaterial;
   white: THREE.MeshStandardMaterial;
+  /** Multicam-style fabric map (uniforms/vests tint it per soldier). */
+  camo: THREE.Texture | null;
 }
 
 export interface TextureLib {
   concrete: THREE.Texture;
+  /** Multicam-ish blobs for uniforms and vests (tinted per soldier). */
+  camo: THREE.Texture;
   asphalt: THREE.Texture;
   dirt: THREE.Texture;
   metal: THREE.Texture;
@@ -219,6 +223,30 @@ export function createTextures(): TextureLib | null {
       wood.g.fill();
     }
 
+    // Camo fabric: layered soft blobs in three tonal bands.
+    const camo = canvas2d(128);
+    if (!camo) return null;
+    camo.g.fillStyle = 'rgb(150,150,150)';
+    camo.g.fillRect(0, 0, 128, 128);
+    const camoBands = ['rgba(96,104,84,0.95)', 'rgba(128,120,92,0.85)', 'rgba(74,78,64,0.9)'];
+    for (let i = 0; i < 90; i++) {
+      const r = 6 + hash2(i, 1, 91) * 22;
+      camo.g.fillStyle = camoBands[i % camoBands.length];
+      camo.g.beginPath();
+      camo.g.ellipse(
+        hash2(i, 2, 93) * 128,
+        hash2(i, 3, 95) * 128,
+        r, r * (0.5 + hash2(i, 4, 97) * 0.8),
+        hash2(i, 5, 99) * Math.PI, 0, Math.PI * 2,
+      );
+      camo.g.fill();
+    }
+    // Weave + wear so it doesn't read as flat paint.
+    for (let y = 0; y < 128; y += 3) {
+      camo.g.fillStyle = y % 6 === 0 ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.05)';
+      camo.g.fillRect(0, y, 128, 1);
+    }
+
     // Dusk sky: equirect gradient + sun glow + horizon haze band.
     const skyCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
     if (!skyCanvas) return null;
@@ -248,6 +276,7 @@ export function createTextures(): TextureLib | null {
       dirt: toTexture(dirt.c, 8),
       metal: toTexture(metal.c, 4),
       sandbag: toTexture(sand.c, 3),
+      camo: toTexture(camo.c, 3),
       wood: toTexture(wood.c, 2),
       sky: (() => {
         const t = new THREE.CanvasTexture(skyCanvas);
@@ -306,6 +335,7 @@ export function createMaterials(textures: TextureLib | null = createTextures()):
     accent: std(0xc9a227, 0.6, 0.3),
     lampEmissive: std(0xffd9a0, 0.4, 0.0, { emissive: 0xffc37a, emissiveIntensity: 1.9 }),
     white: std(0xd8d8d4, 0.8, 0.02),
+    camo: t?.camo ?? null,
   };
 }
 

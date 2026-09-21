@@ -31,8 +31,11 @@ Game (core/Game.ts)
 ├── GrenadeSystem     — throw/bounce/fuse
 ├── SpawnSystem       — fair validated spawning
 ├── ProgressionSystem — rounds/score/objectives
+├── PickupSystem      — field medkits: spawn placement, heal, expiry
+├── ThreatIndicator   — ground danger streaks + pulse rings (world-space)
 ├── ParticleSystem    — pooled VFX
-└── React (ui/)       — App/HUD/Menus via getSnapshot() + events
+├── MapPlan           — baked top-down level plan for the radar (DOM-safe)
+└── React (ui/)       — App/HUD/Menus/Radar via getSnapshot() + events
 ```
 
 ## Frame update order (PLAYING)
@@ -41,17 +44,19 @@ Game (core/Game.ts)
 2. ESC → pause check
 3. Mouse → ground-plane aim point
 4. Grenade key
-5. `player.update` (movement, aim, reload timers, weapon switch, trigger)
+5. `player.update` (movement, sprint, aim, reload timers, weapon switch, trigger)
 6. `combat.playerFire` → scoring, hitmarkers, kill events, AI damage notify
 7. Footsteps
 8. `spawns.update` (validated, staggered)
-9. Each `AIController.update` (perceive → decide → act)
+9. Each `AIController.update` (perceive → decide → act, cover lean easing)
 10. `grenades.update` (physics, fuse, explode → kills)
-11. Corpse cleanup (6 s lifetime, max 10)
-12. Defeat / round-complete checks
-13. Camera (follow + aim lookahead + zoom + shake)
-14. Particles, noise pruning
-15. `input.endFrame()`, render
+11. `pickups.update` (medkit spawn/expiry/heal → HUD event + audio)
+12. `particles.setFocus` + `threats.update` (danger streaks/front-end data)
+13. Corpses: `updateVisual` each (death collapse), then cleanup (6 s, max 10)
+14. Defeat / round-complete checks
+15. Camera (follow + aim lookahead + zoom + shake)
+16. Particles, noise pruning, resupply-notice fade
+17. `input.endFrame()`, render
 
 PAUSED runs zero updates (loop still renders the frozen frame behind the menu).
 ROUND_COMPLETE simulates particles/camera only. VICTORY/DEFEAT settle AI briefly.
@@ -76,12 +81,14 @@ ROUND_COMPLETE simulates particles/camera only. VICTORY/DEFEAT settle AI briefly
 ## Restart safety
 
 `clearRunEntities()` removes every enemy mesh, controller, grenade, particle,
-claim, and noise; resets progression/spawns/player; exactly one rAF loop ever
-runs (`loopRunning` guard; `init()` is idempotent).
+claim, noise and **medkit**, clears the danger indicator, and resets
+progression/spawns/player; exactly one rAF loop ever runs (`loopRunning` guard;
+`init()` is idempotent).
 
 ## UE5 portability
 
 Pure modules (`combat/DamageSystem`, `combat/EnemyFire`, `world/Navigation`,
-`weapons/Weapons` rules, `ai/CoverSystem` scoring, `systems/*` validation,
-`data/config`) have no Three.js dependency and map 1:1 to UE5 C++/Blueprint
-logic. See UE5_MIGRATION_GUIDE.md.
+`weapons/Weapons` rules, `ai/CoverSystem` scoring, `systems/PickupSystem`
+placement, `systems/*` validation, `ui/Radar.radarProject`, `data/config`) have
+no renderer dependency and map 1:1 to UE5 C++/Blueprint logic. See
+UE5_MIGRATION_GUIDE.md.

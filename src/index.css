@@ -67,6 +67,46 @@ body {
 }
 @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 
+/* radar minimap (top-right) */
+.radar {
+  position: relative;
+  width: 158px; height: 158px;
+  margin: 0 0 8px auto;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(10, 22, 24, 0.55), rgba(8, 14, 16, 0.9));
+  box-shadow: 0 0 0 1px var(--panel-edge), 0 6px 18px rgba(0, 0, 0, 0.45);
+  transition: box-shadow 0.15s linear, opacity 0.2s linear;
+}
+.radar.hot { box-shadow: 0 0 0 1px rgba(255, 70, 46, 0.7), 0 0 18px rgba(255, 60, 40, 0.35); }
+.radar-face { display: block; width: 158px; height: 158px; }
+.radar-label {
+  position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%);
+  font-size: 9px; letter-spacing: 2px; font-weight: 700; color: var(--dim);
+  pointer-events: none;
+}
+.radar.hot .radar-label { color: #ff6a52; animation: pulse 0.9s ease-in-out infinite; }
+
+/* round resupply + medkit notices (centre-bottom, above the hints) */
+.resupply-tag {
+  position: absolute; left: 50%; bottom: 19vh; transform: translateX(-50%);
+  font-size: 13px; letter-spacing: 2.4px; font-weight: 700; color: #8fe6a6;
+  text-shadow: 0 0 12px rgba(60, 200, 110, 0.6);
+  pointer-events: none;
+}
+.medkit-tag {
+  position: absolute; left: 50%; bottom: 15vh; transform: translateX(-50%);
+  font-size: 14px; letter-spacing: 1.8px; font-weight: 800; color: #ff7f6a;
+  text-shadow: 0 0 12px rgba(255, 80, 60, 0.6);
+  animation: medkitpop 1.6s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes medkitpop {
+  0% { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.9); }
+  18% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.06); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-14px); }
+}
+
 /* crosshair follows cursor */
 .crosshair {
   --gap: 9px;

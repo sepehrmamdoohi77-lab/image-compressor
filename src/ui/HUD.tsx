@@ -1,6 +1,7 @@
-// Tactical HUD overlay: objective, bars, ammo, crosshair, feed, banners.
+// Tactical HUD overlay: objective, radar, bars, ammo, crosshair, feed, banners.
 import { useEffect, useRef } from 'react';
 import type { HudSnapshot } from '../game/core/GameStates';
+import { Radar } from './Radar';
 
 interface Props {
   snap: HudSnapshot;
@@ -20,6 +21,28 @@ function Bar({ value, max, className }: { value: number; max: number; className:
 export function HUD({ snap, banner, feed }: Props): JSX.Element {
   const crossRef = useRef<HTMLDivElement>(null);
   const hitRef = useRef<HTMLDivElement>(null);
+  const radarRef = useRef<HTMLCanvasElement>(null);
+  const radar = useRef<Radar | null>(null);
+  const radarLayerRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Radar minimap: draw on the 2D canvas whenever a new snapshot arrives.
+  useEffect(() => {
+    if (!radar.current) radar.current = new Radar(radarRef.current);
+    if (radarLayerRef.current !== snap.radarLayer) {
+      radarLayerRef.current = snap.radarLayer;
+      radar.current.setLevelLayer(snap.radarLayer);
+    }
+    radar.current.render({
+      playerX: snap.radarPlayerX,
+      playerZ: snap.radarPlayerZ,
+      yaw: snap.radarYaw,
+      threatLevel: snap.threatLevel,
+      threatAngleDeg: snap.threatAngleDeg,
+      blips: snap.radarContacts.map((c) => ({ x: c.x, z: c.z, weight: c.weight })),
+      pickups: snap.radarPickups,
+      enemiesAlive: snap.enemiesRemaining,
+    });
+  }, [snap]);
 
   // Crosshair follows the mouse via direct DOM updates (no re-renders).
   useEffect(() => {
@@ -102,8 +125,12 @@ export function HUD({ snap, banner, feed }: Props): JSX.Element {
         )}
       </div>
 
-      {/* score */}
+      {/* radar minimap + score */}
       <div className="hud-top-right">
+        <div className={`radar ${dangerOn ? 'hot' : ''}`} style={{ opacity: 0.55 + danger * 0.45 }}>
+          <canvas ref={radarRef} className="radar-face" width={158} height={158} />
+          <span className="radar-label">{dangerOn ? 'CONTACT' : 'SCAN'}</span>
+        </div>
         <div className="score-box">
           <div className="score">{snap.score.toLocaleString()}</div>
           <div className="score-sub">
@@ -136,6 +163,7 @@ export function HUD({ snap, banner, feed }: Props): JSX.Element {
           <div className="status-row">
             <span className={`pill ${snap.grenades > 0 ? '' : 'empty'}`}>◉ G×{snap.grenades}</span>
             {snap.aiming && <span className="pill active">AIM</span>}
+            {snap.medkitsUsed > 0 && <span className="pill">✚ ×{snap.medkitsUsed}</span>}
           </div>
         </div>
       </div>
@@ -164,6 +192,18 @@ export function HUD({ snap, banner, feed }: Props): JSX.Element {
         <div className="round-banner">
           <div className="round-title">{banner.label}</div>
           <div className="round-brief">{banner.briefing}</div>
+        </div>
+      )}
+
+      {/* resupply / medkit notices */}
+      {snap.resupplyFade > 0.01 && (
+        <div className="resupply-tag" style={{ opacity: Math.min(1, snap.resupplyFade * 1.6) }}>
+          ⟳ RESUPPLIED — HP &amp; AMMO RESTORED
+        </div>
+      )}
+      {snap.lastHeal > 0 && (
+        <div className="medkit-tag" key={snap.medkitsUsed}>
+          ✚ MEDKIT +{snap.lastHeal} HP
         </div>
       )}
 

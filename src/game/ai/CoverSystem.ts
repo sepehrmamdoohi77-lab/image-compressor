@@ -10,6 +10,8 @@ export interface CoverScoreCtx {
   preferredMin: number;
   preferredMax: number;
   reachable: boolean;
+  /** Recently abandoned by anyone: soldiers avoid re-using the same spot. */
+  recentlyUsed?: boolean;
 }
 
 /** Higher = better. Pure and deterministic (no Math.random inside). */
@@ -47,11 +49,16 @@ export function scoreCoverPoint(p: CoverPoint, ctx: CoverScoreCtx): number {
   // 6. Prefer not to be too close to the threat.
   if (distT < 4) score -= 25;
 
+  // 7. Fresh positions: a point someone just left is a known firing solution.
+  if (ctx.recentlyUsed) score -= AI.coverReusePenalty;
+
   return score;
 }
 
 export class CoverSystem {
   claims = new Map<number, number>(); // cover index -> enemy id
+  /** cover index -> last time it was occupied (drives the re-use penalty). */
+  private lastUsedAt = new Map<number, number>();
 
   constructor(private level: Level) {}
 
@@ -66,6 +73,28 @@ export class CoverSystem {
 
   claim(index: number, enemyId: number): void {
     this.claims.set(index, enemyId);
+  }
+
+  /** Mark a point as (re)occupied so it cools down after being abandoned. */
+  markUsed(index: number, now: number): void {
+    this.lastUsedAt.set(index, now);
+  }
+
+  /** True while a point is still on its "don't camp the same sandbag" cooldown. */
+  recentlyUsed(index: number, now = this.now): boolean {
+    const t = this.lastUsedAt.get(index);
+    return t !== undefined && now - t < AI.coverReuseCooldown;
+  }
+
+  /** Does this point still shield its occupant from (tx,tz)? False = flanked. */
+  blocksThreat(index: number, tx: number, tz: number): boolean {
+    const p = this.points[index];
+    if (!p) return false;
+    const dx = tx - p.x;
+    const dz = tz - p.z;
+    const len = Math.max(1e-6, Math.hypot(dx, dz));
+    // Point normal faces away from its obstacle: the threat should be opposite.
+    return p.nx * (dx / len) + p.nz * (dz / len) < 0.35;
   }
 
   releaseByEnemy(enemyId: number): void {
@@ -85,6 +114,7 @@ export class CoverSystem {
   findCover(
     ex: number, ez: number, tx: number, tz: number, enemyId: number,
     preferredMin: number, preferredMax: number,
+    now = this.now,
   ): number {
     const pts = this.points;
     let best = -1;
@@ -98,6 +128,7 @@ export class CoverSystem {
       const occupied = this.isClaimedByOther(i, enemyId);
       const score = scoreCoverPoint(p, {
         ex, ez, tx, tz, occupied, preferredMin, preferredMax, reachable: true,
+        recentlyUsed: this.recentlyUsed(i, now),
       }) + (occupied ? 0 : Math.random() * 4); // small jitter breaks ties
       if (score > bestScore) {
         bestScore = score;
@@ -107,7 +138,12 @@ export class CoverSystem {
     return best;
   }
 
+  /** Current simulation time, injected by the AI layer for cooldown maths. */
+  now = 0;
+
   reset(): void {
     this.claims.clear();
+    this.lastUsedAt.clear();
+    this.now = 0;
   }
 }

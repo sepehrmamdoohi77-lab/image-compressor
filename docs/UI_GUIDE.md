@@ -10,12 +10,15 @@ React owns menus/HUD only (`src/ui/`); zero gameplay logic. Game → UI via
   16–24 px, dynamic gap from live spread, dot + 4 lines, hitmarker X flash
   (red on headshot). OS cursor hidden while playing.
 - **Top-center**: round label + `ELIMINATE ALL HOSTILES — N LEFT` + reload tag.
-- **Top-right**: score, K/HS/ACC, killfeed (5 s lifetime, max 5).
-- **Bottom-left**: HP + armor bars with numbers, grenade pips, AIM pill,
-  low-HP threshold styling.
+- **Top-right**: **radar minimap** (`ui/Radar.ts`), score, K/HS/ACC, killfeed
+  (5 s lifetime, max 5).
+- **Bottom-left**: HP + armor bars with numbers, grenade pips, AIM pill, medkit
+  counter (`✚ ×N`), low-HP threshold styling.
 - **Bottom-right**: weapon name, big mag/reserve (red ≤25%), 5 slots with ammo.
 - **Overlays**: damage vignette (opacity = recent damage), low-HP pulse,
-  round banner (3.4 s), contextual hints (reload/dry), tiny FPS readout.
+  round banner (3.4 s), **round resupply notice** (`.resupply-tag`, driven by
+  `resupplyFade`), **medkit pop** (`.medkit-tag`, keyed by `medkitsUsed` so each
+  pickup replays its animation), contextual hints (reload/dry), tiny FPS readout.
 
 ## Screens (`ui/Menus.tsx`, routed by `ui/App.tsx`)
 
@@ -50,6 +53,27 @@ No clipped/overlapping UI at 1280×720, 1920×1080, 2560×1440, 21:9.
 
 All three are pointer-transparent and driven by the 10 Hz snapshot poll, so they
 cost no extra React renders beyond the existing HUD tick.
+
+## Radar minimap
+
+`ui/Radar.ts` is a plain 2D canvas (158×158 CSS px) that redraws from
+`snap.radarLayer` / `radarYaw` / `radarPlayerX` / `radarPlayerZ` /
+`radarContacts` / `radarPickups` on every snapshot tick:
+
+- the level plan is **baked once** into an offscreen canvas by
+  `world/MapPlan.bakeLevelLayer()` (one 7 px cell per world metre, plan-style
+  block fill + outline) and reused for the whole session;
+- the radar is **player-relative and facing-up**: the baked plan is drawn with
+  `translate(centre) → scale → rotate(yaw) → translate(-player)`, so north spins
+  as you turn; the player arrow always sits at the centre;
+- **hostile blips render only when `threatLevel > 0`** — the radar is a threat
+  read-out, not a wallhack. Blips fade in from 26 m (`RADAR.blipRange`), scale
+  with closeness and ping with a halo; a gradient **bearing wedge** matches
+  `threatAngleDeg`;
+- **health kits** are green crosses; the panel border/label switch to
+  `CONTACT` (red, pulsing) while the danger line is up;
+- pure projection math lives in `radarProject()` and is unit-tested (ahead = up,
+  right = right, rotation and scale).
 
 ## Style
 

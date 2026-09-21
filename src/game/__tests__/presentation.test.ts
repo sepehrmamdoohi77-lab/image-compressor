@@ -22,18 +22,19 @@ function rig(): CharacterRig {
 
 describe('camera framing', () => {
   it('sits lower than the old 55° so hostiles read against the skyline', () => {
-    expect(CAMERA_CONFIG.elevationDeg).toBeLessThan(55);
-    expect(CAMERA_CONFIG.elevationDeg).toBeGreaterThanOrEqual(38);
+    // Two passes of lowering: 55° -> 46° -> 40°. Lock the low-angle band in.
+    expect(CAMERA_CONFIG.elevationDeg).toBeLessThanOrEqual(41);
+    expect(CAMERA_CONFIG.elevationDeg).toBeGreaterThanOrEqual(36);
 
     const cam = new TacticalCamera(16 / 9);
     cam.setTarget(0, 0, 0, true);
     cam.update(1 / 60);
-    // sin(46°) * 21m ≈ 15.1m high (was ~17.2m at 55°).
-    expect(cam.camera.position.y).toBeGreaterThan(11);
-    expect(cam.camera.position.y).toBeLessThan(16.5);
-    // Horizontal stand-off grew, which is what opens up the forward view.
+    // sin(40°) * 20m ≈ 12.9m high (was ~17.2m at 55°, ~15.1m at 46°).
+    expect(cam.camera.position.y).toBeGreaterThan(10.5);
+    expect(cam.camera.position.y).toBeLessThan(14.5);
+    // Horizontal stand-off grew again: the forward view opens up.
     const flat = Math.hypot(cam.camera.position.x, cam.camera.position.z);
-    expect(flat).toBeGreaterThan(Math.cos((55 * Math.PI) / 180) * CAMERA_CONFIG.distance);
+    expect(flat).toBeGreaterThan(Math.cos((46 * Math.PI) / 180) * CAMERA_CONFIG.distance * 1.08);
   });
 });
 
@@ -75,7 +76,7 @@ describe('two-handed weapon grip', () => {
       const r = rig();
       const mesh = buildWeaponMesh(id, mats, geos);
       r.mountWeapon(mesh.group, mesh.grip.support);
-      r.update(1 / 60, { speed: 0, aiming: false, firing: false, reloading: false, dead: false, crouch: false });
+      r.update(1 / 60, { speed: 0, aiming: false, firing: false, reloading: false, dead: false, sprint: 0, lean: 0, turnRate: 0, crouch: false });
       r.root.updateMatrixWorld(true);
       r.handL.getWorldPosition(handWorld);
       supportWorld.set(mesh.grip.support[0], mesh.grip.support[1], mesh.grip.support[2]);
@@ -95,7 +96,7 @@ describe('two-handed weapon grip', () => {
     r.mountWeapon(mesh.group, mesh.grip.support);
     r.playFire();
     for (let i = 0; i < 30; i++) {
-      r.update(1 / 60, { speed: 4.6, aiming: true, firing: true, reloading: false, dead: false, crouch: false });
+      r.update(1 / 60, { speed: 4.6, aiming: true, firing: true, reloading: false, dead: false, sprint: 0, lean: 0, turnRate: 0, crouch: false });
       r.root.updateMatrixWorld(true);
     }
     const handWorld = new THREE.Vector3();
@@ -114,7 +115,7 @@ describe('two-handed weapon grip', () => {
     const hand = new THREE.Vector3();
     const offset = (reloading: boolean): number => {
       for (let i = 0; i < 60; i++) {
-        r.update(1 / 60, { speed: 0, aiming: false, firing: false, reloading, dead: false, crouch: false });
+        r.update(1 / 60, { speed: 0, aiming: false, firing: false, reloading, dead: false, sprint: 0, lean: 0, turnRate: 0, crouch: false });
       }
       r.root.updateMatrixWorld(true);
       r.handL.getWorldPosition(hand);
@@ -235,5 +236,71 @@ describe('procedural graphics assets', () => {
   it('tessellates shared geometry finely enough for close-up props', () => {
     expect(geos.sphere.parameters.widthSegments).toBeGreaterThanOrEqual(16);
     expect(geos.cylinder.parameters.radialSegments).toBeGreaterThanOrEqual(12);
+  });
+});
+
+describe('animation state machine', () => {
+  it('drops the weapon into a two-handed carry while sprinting', () => {
+    const r = rig();
+    const mesh = buildWeaponMesh('rifle', mats, geos);
+    r.mountWeapon(mesh.group, mesh.grip.support);
+    const upright = r.weaponMount.rotation.x;
+    for (let i = 0; i < 90; i++) {
+      r.update(1 / 60, { speed: 7.4, aiming: false, firing: false, reloading: false, dead: false, crouch: false, sprint: 1, lean: 0, turnRate: 0 });
+    }
+    // Weapon angles down into a carry and the arms stay on it.
+    expect(r.weaponMount.rotation.x).toBeGreaterThan(upright + 0.15);
+    const hand = new THREE.Vector3();
+    const support = new THREE.Vector3(...mesh.grip.support);
+    r.root.updateMatrixWorld(true);
+    r.handL.getWorldPosition(hand);
+    mesh.group.localToWorld(support);
+    expect(hand.distanceTo(support)).toBeLessThan(0.2);
+  });
+
+  it('drives a stride with real knee bend while running', () => {
+    const r = rig();
+    const angles = new Set<string>();
+    for (let i = 0; i < 40; i++) {
+      r.update(1 / 60, { speed: 4.6, aiming: false, firing: false, reloading: false, dead: false, crouch: false, sprint: 0.4, lean: 0, turnRate: 0 });
+      angles.add(r.legL.rotation.x.toFixed(3));
+      expect(Math.abs(r.shinL.rotation.x)).toBeLessThanOrEqual(1.36);
+    }
+    expect(angles.size).toBeGreaterThan(20); // the legs actually move
+  });
+
+  it('collapses to the ground on death and settles there', () => {
+    const r = rig();
+    const mesh = buildWeaponMesh('rifle', mats, geos);
+    r.mountWeapon(mesh.group, mesh.grip.support);
+    for (let i = 0; i < 90; i++) {
+      r.update(1 / 60, { speed: 0, aiming: false, firing: false, reloading: false, dead: true, crouch: false, sprint: 0, lean: 0, turnRate: 0 });
+    }
+    // Body has toppled past horizontal and dropped onto the deck.
+    expect(r.body.rotation.x).toBeLessThan(-1.4);
+    expect(r.body.position.y).toBeGreaterThan(0.2);
+    // Arms have gone slack (hands no longer hold the weapon pose).
+    expect(Math.abs(r.foreL.rotation.x)).toBeLessThan(1.6);
+    // The fall is stable: the corpse stops moving.
+    const before = r.body.rotation.z;
+    for (let i = 0; i < 120; i++) {
+      r.update(1 / 60, { speed: 0, aiming: false, firing: false, reloading: false, dead: true, crouch: false, sprint: 0, lean: 0, turnRate: 0 });
+    }
+    expect(Math.abs(r.body.rotation.z - before)).toBeLessThan(0.02);
+  });
+
+  it('leans the torso out of cover and comes back in', () => {
+    const r = rig();
+    for (let i = 0; i < 60; i++) {
+      r.update(1 / 60, { speed: 0, aiming: true, firing: false, reloading: false, dead: false, crouch: false, sprint: 0, lean: 1, turnRate: 0 });
+    }
+    const leaned = r.torso.rotation.z;
+    expect(leaned).toBeGreaterThan(0.2);
+    for (let i = 0; i < 60; i++) {
+      r.update(1 / 60, { speed: 0, aiming: true, firing: false, reloading: false, dead: false, crouch: true, sprint: 0, lean: 0, turnRate: 0 });
+    }
+    expect(r.torso.rotation.z).toBeLessThan(leaned * 0.4);
+    // Crouching actually lowers the body.
+    expect(r.body.position.y).toBeLessThan(-0.2);
   });
 });

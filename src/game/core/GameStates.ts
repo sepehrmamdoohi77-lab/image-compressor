@@ -48,4 +48,20 @@ export interface HudSnapshot {
   threatCount: number;
   /** Distance to the nearest hostile in metres (-1 = none nearby). */
   threatDistance: number;
+  /** Baked level plan for the radar minimap (null before init / in tests). */
+  radarLayer: HTMLCanvasElement | null;
+  /** Player facing in world radians — the radar is drawn facing-up. */
+  radarYaw: number;
+  /** Player world position (radar origin). */
+  radarPlayerX: number;
+  radarPlayerZ: number;
+  /** Hostile blips, populated only while the danger line is active. */
+  radarContacts: { x: number; z: number; weight: number }[];
+  /** Health-kit locations. */
+  radarPickups: { x: number; z: number }[];
+  /** 1 -> 0 fade of the "RESUPPLIED" toast after a round change. */
+  resupplyFade: number;
+  /** Medkits collected this run and the HP restored by the last one. */
+  medkitsUsed: number;
+  lastHeal: number;
 }

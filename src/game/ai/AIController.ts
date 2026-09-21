@@ -50,6 +50,16 @@ export class AIController {
     ai.lastSeenAt = now;
     ai.confidence = Math.max(ai.confidence, 0.55);
     ai.suspicion = 1;
+    // Being shot at while tucked in makes a soldier hug cover harder instead of
+    // popping straight back up — the classic "pinned down" beat.
+    if (e.state === 'InCover' || e.state === 'TakingCover') {
+      ai.damagedInCover += amount;
+      if (Math.random() < AI.suppressedHoldChance) {
+        ai.crouched = true;
+        ai.exposeUntil = 0;
+        ai.hideUntil = Math.max(ai.hideUntil, now + 0.6 + Math.random() * 0.8);
+      }
+    }
     if (amount >= 22 && now - ai.stateTime > 0.4) {
       this.setState('HitReaction', now);
       ai.hideUntil = now + 0.35; // reuse as react-until timer
@@ -71,6 +81,9 @@ export class AIController {
       this.decide(now);
     }
     this.act(dt, now);
+    // Cover lean eases in/out so peeking reads as motion, never a snap.
+    e.ai.lean += (e.ai.leanTarget - e.ai.lean) * Math.min(1, dt * AI.coverLeanDamp);
+    this.ctx.cover.now = now;
     e.updateVisual(dt);
   }
 
@@ -153,6 +166,8 @@ export class AIController {
     e.state = s;
     e.ai.stateTime = now;
     e.ai.crouched = false;
+    e.ai.leanTarget = 0;
+    if (s !== 'InCover' && s !== 'TakingCover') e.ai.damagedInCover = 0;
   }
 
   private reacted(now: number): boolean {
@@ -267,8 +282,19 @@ export class AIController {
           this.setState('Engaging', now);
           return;
         }
-        // Re-evaluate cover if it no longer protects (flanked) or after a while.
-        if (now - ai.stateTime > 9 + Math.random() * 4) {
+        // Still actually covered? A flanking player invalidates the sandbag.
+        if (now - ai.flankCheckAt > AI.coverFlankRecheck) {
+          ai.flankCheckAt = now;
+          if (ai.coverId >= 0 && !this.ctx.cover.blocksThreat(ai.coverId, p.pos.x, p.pos.z)) {
+            if (this.tryTakeCover(now, p.pos.x, p.pos.z)) return;
+            this.setState('Engaging', now);
+            return;
+          }
+        }
+        // Relocate on a timer, or once this position has been shot up enough.
+        const shotUp = ai.damagedInCover >= e.maxHealth * AI.coverRelocateDamage;
+        if (shotUp || now - ai.stateTime > AI.coverRelocateAfter * (0.8 + Math.random() * 0.5)) {
+          ai.damagedInCover = 0;
           if (this.tryTakeCover(now, p.pos.x, p.pos.z)) return;
           this.setState('Engaging', now);
         }
@@ -455,16 +481,23 @@ export class AIController {
         faceX = p.pos.x;
         faceZ = p.pos.z;
         e.aiming = true;
-        // Pop-up rhythm: hide, then expose to fire.
+        // Lean-out rhythm: tuck in, then come up on one shoulder and fire.
         if (ai.exposeUntil > now) {
           ai.crouched = false;
+          ai.leanTarget = ai.peekSide * AI.coverLean;
           this.tryShoot(now);
         } else if (now > ai.hideUntil) {
-          ai.exposeUntil = now + 1.4 + Math.random() * 1.4;
-          ai.hideUntil = ai.exposeUntil + 1.2 + Math.random() * 1.6;
+          ai.exposeUntil = now + AI.coverPeekMin + Math.random() * (AI.coverPeekMax - AI.coverPeekMin);
+          ai.hideUntil = ai.exposeUntil + AI.coverHideMin + Math.random() * (AI.coverHideMax - AI.coverHideMin);
+          // Alternate shoulders between peeks so the silhouette keeps changing.
+          ai.peekSide = Math.random() < 0.5 ? -1 : 1;
           ai.crouched = false;
+          ai.leanTarget = ai.peekSide * AI.coverLean;
+          // Occasionally break cover and dash to a fresh firing position.
+          if (Math.random() < AI.coverAdvanceChance && this.tryTakeCover(now, p.pos.x, p.pos.z)) break;
         } else {
           ai.crouched = true;
+          ai.leanTarget = 0;
         }
         break;
       }
@@ -692,11 +725,14 @@ export class AIController {
   private tryTakeCover(now: number, tx: number, tz: number): boolean {
     const e = this.enemy;
     const ai = e.ai;
-    const idx = this.ctx.cover.findCover(e.pos.x, e.pos.z, tx, tz, e.id, e.def.preferredMin, e.def.preferredMax);
+    const idx = this.ctx.cover.findCover(
+      e.pos.x, e.pos.z, tx, tz, e.id, e.def.preferredMin, e.def.preferredMax, now,
+    );
     if (idx < 0) return false;
     const cp = this.ctx.cover.points[idx];
     if (this.requestPathTo(cp.x, cp.z, now, true)) {
       this.ctx.cover.claim(idx, e.id);
+      this.ctx.cover.markUsed(idx, now);
       ai.coverId = idx;
       this.setState('TakingCover', now);
       return true;
@@ -717,7 +753,8 @@ export class AIController {
       const dT = Math.hypot(cp.x - tx, cp.z - tz);
       if (dE > AI.coverSearchRadius || dT < 9) continue;
       if (this.ctx.cover.isClaimedByOther(i, e.id)) continue;
-      const s = dT * 1.6 - dE + Math.random() * 4;
+      let s = dT * 1.6 - dE + Math.random() * 4;
+      if (this.ctx.cover.recentlyUsed(i, now)) s -= AI.coverReusePenalty * 0.5;
       if (s > bestScore) {
         bestScore = s;
         best = i;
@@ -727,6 +764,7 @@ export class AIController {
     const cp = pts[best];
     if (this.requestPathTo(cp.x, cp.z, now, true)) {
       this.ctx.cover.claim(best, e.id);
+      this.ctx.cover.markUsed(best, now);
       ai.coverId = best;
       this.setState('Retreating', now);
       return true;

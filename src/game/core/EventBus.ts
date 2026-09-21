@@ -11,7 +11,8 @@ export type GameEventType =
   | 'defeat'
   | 'ammo'
   | 'noise'
-  | 'objective';
+  | 'objective'
+  | 'pickup';
 
 export interface GameEvent {
   type: GameEventType;

@@ -31,6 +31,30 @@ north-west; player spawns south (21,39); enemies spawn north/east/west.
 - Props: lamp posts (plaza/gates), emissive heads, barrels, pipes, debris,
   glass windows — ~130 meshes, shared geometries/materials.
 
+## Visual dressing (`Level.buildDetails`)
+
+The collision layout is the skeleton; `buildDetails()` hangs the "professional
+map" pass on it. Everything is visual-only (no grid/obstacle impact), shares the
+four unit geometries and the procedural material library, and adds ~120 meshes:
+
+- **Roofs**: parapet bands plus AC units, vent cylinders and two antenna masts
+  with cross arms and a red beacon — the skyline reads as a working compound,
+  and the masts break up the horizontal rooflines.
+- **Ground plan**: kerb strips along both avenues, dashed centre-line road
+  markings, painted hazard chevrons at the two northern gaps, gravel/rubble
+  piles, dark puddles that catch the sky IBL, and 26 deterministic rubble boxes
+  scattered along the wall bases so no edge is perfectly straight.
+- **Cover dressing**: three-course sandbag stacks with stepped tops and slight
+  per-course rotation, tire stacks by the depot, concrete barriers with hazard
+  stripes at the chokepoints (colour-coded from the accent material).
+- **Back-lot detail**: tarped supply piles (crate + fabricGreen sheeting),
+  cable runs and conduit boxes along the east wall, window sills and lintel
+  bands on the facades, and six lamp posts with emissive heads that anchor the
+  two static point lights.
+
+The same walkability grid drives the radar plan (`world/MapPlan`), so the
+minimap and the level geometry can never drift apart.
+
 ## Collision & data
 
 Realized into: walkability grid (nav), AABB obstacles with heights (bullets,

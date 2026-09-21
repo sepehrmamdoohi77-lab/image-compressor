@@ -63,4 +63,16 @@ dynamic additions. ACES tone mapping, subtle fog (55→150 m).
 Fire: flash + smoke + shell + tracer + kick + sound. Hit: blood + victim
 flash + hitmarker + sound. Wall hit: sparks + dust + tick. Reload: rig dip +
 sound + HUD tag. Grenade: trail + blink + explosion + shake + sound. Death:
-fall + stinger + killfeed + score. Kill: +marker/killfeed/score.
+**two-stage collapse** (impact recoil → fold → topple to one side, limbs slack,
+weapon swinging loose, ends with a settling twitch) + stinger + killfeed + score.
+Kill: +marker/killfeed/score. Medkit: green beacon ring + red cross + pickup
+audio + HUD pop. Round change: resupply toast.
+
+## Death animation (`CharacterMeshFactory.updateFall`)
+
+Driven by `RigAnimState.dead`; the game keeps ticking corpses for their 6 s
+lifetime (`Game` step 13), so the fall completes after the AI controller is
+gone. Timeline: 0–0.22 s impact recoil (shoulders snap back, head whips),
+0.14–1.04 s eased fold and topple (body rotates past horizontal, roll/yaw are
+randomised **once** per death so a corpse never jitters), 1.0–1.4 s settling
+twitch. Arms blend to slack splayed poses and the weapon mount droops with them.

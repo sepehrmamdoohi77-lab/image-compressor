@@ -18,6 +18,10 @@ export interface ScaledEnemyDef extends EnemyDef {
 
 let nextId = 1;
 
+function clamp01(v: number): number {
+  return v < 0 ? 0 : v > 1 ? 1 : v;
+}
+
 export class Enemy {
   readonly id = nextId++;
   archetype: EnemyArchetype;
@@ -58,8 +62,18 @@ export class Enemy {
     strafeAt: 0,
     searchIndex: 0,
     crouched: false,
+    /** -1..0..1 cover lean (which way the soldier peeks out). */
+    lean: 0,
+    /** Cover point the soldier is currently using (-1 = none). */
+    peekSide: 1,
     exposeUntil: 0,
     hideUntil: 0,
+    /** Lean target while peeking (-1/0/1 scaled by AI.coverLean). */
+    leanTarget: 0,
+    /** Time of the last "am I still covered?" re-check. */
+    flankCheckAt: 0,
+    /** Damage absorbed since arriving at this cover point. */
+    damagedInCover: 0,
     homeX: 0,
     homeZ: 0,
     lastHeardAt: 0,
@@ -69,6 +83,8 @@ export class Enemy {
   };
   deathAt = 0;
   firing = false;
+  /** Last frame's yaw (banking into turns). */
+  private lastYaw = 0;
   aiming = false;
   /** Per-enemy accuracy/reaction scaling from difficulty. */
   accuracyMult = 1;
@@ -84,11 +100,12 @@ export class Enemy {
     // Enemies carry generous reserves; reloads still happen (fair + readable).
     this.weapon.reserveAmmo = this.weapon.def.maxReserve;
     this.rig = new CharacterRig(mats, geos, {
-      uniform: 0x5a5148,
-      vest: 0x3a3630,
-      helmet: 0x33302b,
+      uniform: 0x7b6f5e,
+      vest: 0x46403a,
+      helmet: 0x3b3730,
       skin: 0x9a7a5e,
       accent: base.tint,
+      camo: mats.camo,
     });
     this.rig.root.scale.setScalar(base.scale);
     this.weaponMesh = buildWeaponMesh(base.weaponId, mats, geos);
@@ -141,13 +158,22 @@ export class Enemy {
   private syncRig(dt: number): void {
     this.rig.root.position.copy(this.pos);
     this.rig.root.rotation.y = this.yaw;
+    // Shortest-arc yaw delta so the body banks into turns like the player's.
+    let dy = this.yaw - this.lastYaw;
+    while (dy > Math.PI) dy -= Math.PI * 2;
+    while (dy < -Math.PI) dy += Math.PI * 2;
+    const turnRate = dt > 1e-4 ? dy / dt : 0;
+    this.lastYaw = this.yaw;
     this.rig.update(dt, {
       speed: this.speed,
+      sprint: clamp01(this.speed / 5.2),
       aiming: this.aiming,
       firing: this.firing,
       reloading: this.weapon.reloading,
       dead: !this.alive,
       crouch: this.ai.crouched,
+      lean: this.ai.lean,
+      turnRate,
     });
   }
 

@@ -22,12 +22,12 @@ export const WORLD = {
 } as const;
 
 // --- Camera ------------------------------------------------------------------
-// Lower elevation (was 55°) tilts the view closer to the horizon so the player
-// sees hostile silhouettes against the skyline: much better target visibility.
+// Low, tight iso angle: hostiles read as silhouettes against the skyline and the
+// player can actually see the fight develop across the compound.
 export const CAMERA_CONFIG = {
-  elevationDeg: 46,
+  elevationDeg: 40,
   azimuthDeg: 45,
-  distance: 21,
+  distance: 20,
   minDistance: 12,
   maxDistance: 30,
   fov: 38,
@@ -47,11 +47,16 @@ export const PLAYER_CONFIG = {
   startArmor: 50,
   walkSpeed: 4.6,
   runMultiplier: 1.0,
+  /** Hold Shift: sprint. Faster, louder, weapon lowered, no aiming. */
+  sprintMultiplier: 1.62,
+  sprintAccelBonus: 1.35,
   aimMoveMultiplier: 0.55,
   accel: 26,
   decel: 30,
   grenades: 3,
   maxGrenades: 4,
+  /** Round resupply: how much armor a fresh round hands back. */
+  resupplyArmor: 40,
 } as const;
 
 export interface WeaponSound {
@@ -340,6 +345,57 @@ export const AI = {
   missVertical: 0.45,
   /** A round passing closer than this is a "near miss": whiz + shake. */
   nearMissRadius: 1.8,
+
+  // --- Cover behaviour ----------------------------------------------------------
+  // Hostiles fight from cover like soldiers: hide, lean out on one side to shoot,
+  // duck back, relocate when flanked or suppressed, and never re-use the same
+  // sandbag forever.
+  coverPeekMin: 1.2, // seconds exposed per peek
+  coverPeekMax: 2.4,
+  coverHideMin: 1.0, // seconds tucked in before the next peek
+  coverHideMax: 2.0,
+  coverLean: 0.42, // peak body lean (radians) while exposing
+  coverLeanDamp: 6.5, // how fast the lean eases in/out (per second)
+  coverRelocateAfter: 7.5, // leave cover after this long even if still safe
+  coverRelocateDamage: 0.35, // health fraction lost while in cover -> relocate
+  coverReuseCooldown: 16, // seconds before an abandoned point is attractive again
+  coverReusePenalty: 45, // score penalty while the cooldown runs
+  coverFlankRecheck: 1.1, // seconds between "am I still covered?" checks
+  suppressedHoldChance: 0.75, // chance to stay tucked when freshly hit in cover
+  coverAdvanceChance: 0.3, // chance to advance to the NEXT cover on a peek
+} as const;
+
+/**
+ * Field pickups: random resupply crates that appear out in the compound. The
+ * player walks over one to use it (fraction of MAX health, never wasted at full).
+ */
+export const PICKUPS = {
+  /** Fraction of max health restored by one medkit. */
+  healthFraction: 0.3,
+  /** Most health kits on the map at the same time. */
+  maxActive: 2,
+  /** Seconds between spawn attempts (randomised inside the range). */
+  spawnEveryMin: 11,
+  spawnEveryMax: 18,
+  /** How long a kit waits to be found before it disappears. */
+  lifetime: 34,
+  /** Pickup radius (m) around the player. */
+  radius: 1.35,
+  /** Kits never spawn closer than this to the player (no free heals in your face). */
+  minDistanceFromPlayer: 9,
+  /** Medkit visual: bob amplitude/rate + beacon ring. */
+  bobAmplitude: 0.12,
+  spinRate: 0.9,
+} as const;
+
+/** Minimap radar (HUD, top-right). */
+export const RADAR = {
+  /** World units across the radar face (metres). */
+  spanMeters: 52,
+  /** Blips fade in from this range and are brightest at zero. */
+  blipRange: 26,
+  /** Health kits are shown as green crosses. */
+  showPickups: true,
 } as const;
 
 /** Readability aid: "danger" telegraphed when hostiles close in on the player. */

@@ -463,6 +463,102 @@ export class Level {
       box(this.mats.paintedMetal, cellToWorld(cx), 0.55, cellToWorld(cz), 0.5, 1.1, 0.4);
     }
 
+    // ---- street furniture + urban dressing ------------------------------------
+    // Avenues get kerb strips so the roads read as built infrastructure.
+    for (const z of [-21.5, 21.5]) {
+      box(this.mats.concreteDark, 0, 0.06, z, 44, 0.12, 0.3);
+    }
+    for (const x of [-21.5, 21.5]) {
+      box(this.mats.concreteDark, x, 0.06, 0, 0.3, 0.12, 44);
+    }
+
+    // Lamp posts: pole + bracket + emissive head (anchors the two point lights).
+    const lamp = (cx: number, cz: number, ry: number): void => {
+      const x = cellToWorld(cx);
+      const z = cellToWorld(cz);
+      const pole = new THREE.Mesh(this.geos.cylinder, this.mats.metalDark);
+      pole.position.set(x, 2.3, z);
+      pole.scale.set(0.14, 4.6, 0.14);
+      pole.castShadow = true;
+      this.group.add(pole);
+      this.meshes.push(pole);
+      box(this.mats.metalDark, x + Math.sin(ry) * 0.5, 4.55, z + Math.cos(ry) * 0.5, 0.1, 0.1, 1.1, ry);
+      box(this.mats.lampEmissive, x + Math.sin(ry) * 1.0, 4.42, z + Math.cos(ry) * 1.0, 0.5, 0.16, 0.34, ry);
+    };
+    lamp(15, 13, 0.0); lamp(28, 13, 0.0);
+    lamp(15, 29, 0.0); lamp(28, 29, 0.0);
+    lamp(2, 21, Math.PI / 2); lamp(41, 21, Math.PI / 2);
+
+    // Roof kit: AC units + vents so the buildings don't read as blank slabs.
+    const roofKit = (cx: number, cz: number, y: number): void => {
+      const x = cellToWorld(cx);
+      const z = cellToWorld(cz);
+      box(this.mats.metal, x, y + 0.35, z, 1.5, 0.7, 1.1);
+      box(this.mats.metalDark, x + 0.5, y + 0.78, z - 0.4, 0.5, 0.26, 0.5);
+      const vent = new THREE.Mesh(this.geos.cylinder, this.mats.metal);
+      vent.position.set(x - 0.9, y + 0.5, z + 0.6);
+      vent.scale.set(0.32, 0.5, 0.32);
+      vent.castShadow = true;
+      this.group.add(vent);
+      this.meshes.push(vent);
+    };
+    roofKit(6, 18, 3.6); roofKit(37, 18, 3.6);
+    roofKit(7, 7, 3.6); roofKit(36, 7, 3.6);
+    roofKit(7, 33, 3.6); roofKit(36, 33, 3.6);
+
+    // Antenna masts with cross arms (silhouette interest against the sky).
+    const mast = (cx: number, cz: number, h: number): void => {
+      const x = cellToWorld(cx);
+      const z = cellToWorld(cz);
+      const pole = new THREE.Mesh(this.geos.cylinder, this.mats.metalDark);
+      pole.position.set(x, 3.6 + h / 2, z);
+      pole.scale.set(0.09, h, 0.09);
+      pole.castShadow = true;
+      this.group.add(pole);
+      this.meshes.push(pole);
+      for (let i = 0; i < 3; i++) {
+        box(this.mats.metalDark, x, 3.9 + h * 0.55 + i * 0.4, z, 1.1 - i * 0.25, 0.06, 0.06);
+      }
+      box(this.mats.accent, x, 3.9 + h * 0.85, z, 0.16, 0.16, 0.16); // beacon
+    };
+    mast(6, 18, 3.4); mast(37, 33, 2.8);
+
+    // Tarped supply piles (fabric over crates) — reads as a working compound.
+    const tarp = (cx: number, cz: number, ry: number): void => {
+      const x = cellToWorld(cx);
+      const z = cellToWorld(cz);
+      box(this.mats.crate, x, 0.3, z, 1.6, 0.6, 1.2, ry);
+      box(this.mats.fabricGreen, x, 0.66, z, 1.75, 0.18, 1.35, ry + 0.06);
+      box(this.mats.fabricGreen, x, 0.78, z, 1.1, 0.12, 0.9, ry - 0.1);
+    };
+    tarp(9, 31, 0.2); tarp(34, 36, -0.3); tarp(20, 5, 0.45);
+
+    // Concrete barriers with hazard stripes guarding the two chokepoints.
+    const barrier = (cx: number, cz: number, ry: number): void => {
+      const x = cellToWorld(cx);
+      const z = cellToWorld(cz);
+      box(this.mats.concrete, x, 0.42, z, 1.8, 0.84, 0.5, ry);
+      box(this.mats.accent, x, 0.78, z, 1.5, 0.16, 0.52, ry);
+    };
+    barrier(13, 12, 0); barrier(30, 12, 0);
+    barrier(13, 30, 0); barrier(30, 30, 0);
+
+    // Rubble scatter along the wall bases (breaks the perfectly straight edges).
+    for (let i = 0; i < 26; i++) {
+      const side = i % 4;
+      const t = (i * 7.13) % 40 - 20;
+      const x = side === 0 ? t : side === 1 ? 20.6 : side === 2 ? t : -20.6;
+      const z = side === 0 ? -20.6 : side === 1 ? t : side === 2 ? 20.6 : t;
+      const s = 0.18 + ((i * 13) % 7) * 0.05;
+      const m = new THREE.Mesh(this.geos.box, this.mats.dirt);
+      m.position.set(x, s * 0.5, z);
+      m.scale.set(s * 1.7, s, s * 1.4);
+      m.rotation.y = i * 0.7;
+      m.castShadow = true;
+      this.group.add(m);
+      this.meshes.push(m);
+    }
+
     // Window sills + lintel shadow bands on the exterior facades.
     const sill = (x: number, y: number, z: number, w: number, d: number): void =>
       void box(this.mats.concreteDark, x, y, z, w, 0.14, d);

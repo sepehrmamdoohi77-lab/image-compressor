@@ -22,7 +22,10 @@ export class Player {
   aiming = false;
   crouched = false;
   moving = false;
+  sprinting = false;
   speed = 0;
+  /** Last frame's yaw, used to bank the body into turns. */
+  private lastYaw = Math.PI;
   recoil = 0;
   wishFire = false; // set each frame: trigger wants a shot
   lastDamageAt = -Infinity;
@@ -33,12 +36,15 @@ export class Player {
   radius = 0.35;
   /** Fired when a reload completes (weapon-specific foley lives in AudioManager). */
   onReloadComplete: ((id: WeaponId) => void) | null = null;
+  /** How far this frame's movement noise carries (0 = silent). Sprinting is loud. */
+  noiseRadius = 0;
 
   private tmp = new THREE.Vector3();
 
   constructor(mats: MaterialLib, geos: GeometryLib) {
     this.rig = new CharacterRig(mats, geos, {
-      uniform: 0x4c5744, vest: 0x2e332a, helmet: 0x3a4034, skin: 0xb08a68, accent: 0x3fa7ff,
+      uniform: 0x6d7a58, vest: 0x3c4433, helmet: 0x39402f, skin: 0xb08a68,
+      accent: 0x3fa7ff, camo: mats.camo,
     });
     for (const id of WEAPON_ORDER) {
       this.weapons.set(id, new WeaponInstance(id));
@@ -94,6 +100,9 @@ export class Player {
     this.recoil = 0;
     this.aiming = false;
     this.crouched = false;
+    this.sprinting = false;
+    this.noiseRadius = 0;
+    this.lastYaw = this.yaw;
     this.rig.reset();
     for (const w of this.weapons.values()) w.reset();
     this.currentId = 'rifle';
@@ -101,10 +110,33 @@ export class Player {
     this.syncRig(0);
   }
 
-  refillForRound(): void {
-    for (const w of this.weapons.values()) w.refill(w.def.autoRefillReservePerRound);
-    this.grenades = Math.min(PLAYER_CONFIG.maxGrenades, this.grenades + 1);
-    this.armor = Math.min(this.maxArmor, this.armor + 25);
+  /**
+   * Round resupply (every round change): the squad tops you back up — health to
+   * full, every magazine reloaded, reserves refilled, fresh grenades and armor.
+   * Without it a 5-round run is a slow death spiral.
+   */
+  resupply(): void {
+    this.health = this.maxHealth;
+    this.sprinting = false;
+    this.noiseRadius = 0;
+    for (const w of this.weapons.values()) {
+      w.cancelReload();
+      w.magAmmo = w.def.magSize;
+      w.reserveAmmo = Math.max(w.reserveAmmo, w.def.startReserve);
+    }
+    this.grenades = PLAYER_CONFIG.grenades;
+    this.armor = Math.min(
+      this.maxArmor,
+      Math.max(this.armor, PLAYER_CONFIG.startArmor) + PLAYER_CONFIG.resupplyArmor,
+    );
+  }
+
+  /** Field medkit: restore health without overhealing. Returns HP gained. */
+  heal(amount: number): number {
+    if (!this.alive) return 0;
+    const before = this.health;
+    this.health = Math.min(this.maxHealth, this.health + amount);
+    return this.health - before;
   }
 
   takeDamage(healthDamage: number, armorDamage: number, now: number): boolean {
@@ -169,11 +201,16 @@ export class Player {
         mx /= mLen;
         mz /= mLen;
       }
-    this.aiming = input.mouseRight;
+      this.aiming = input.mouseRight;
       this.crouched = input.isDown('KeyC') || input.isDown('ControlLeft');
+      // Shift = sprint: faster, louder, weapon drops to a carry.
+      const wantsSprint = (input.isDown('ShiftLeft') || input.isDown('ShiftRight')) && !this.aiming;
+      this.sprinting = wantsSprint && !this.crouched && mLen > 0.05;
       const penalty = 1 - w.def.movePenalty - (this.aiming ? 1 - PLAYER_CONFIG.aimMoveMultiplier : 0) - (this.crouched ? 0.5 : 0);
-      const targetSpeed = PLAYER_CONFIG.walkSpeed * clamp(penalty, 0.3, 1);
-      const accel = mLen > 0.05 ? PLAYER_CONFIG.accel : PLAYER_CONFIG.decel;
+      const sprintMult = this.sprinting ? PLAYER_CONFIG.sprintMultiplier : 1;
+      const targetSpeed = PLAYER_CONFIG.walkSpeed * clamp(penalty, 0.3, 1) * sprintMult;
+      const accel = (mLen > 0.05 ? PLAYER_CONFIG.accel : PLAYER_CONFIG.decel)
+        * (this.sprinting ? PLAYER_CONFIG.sprintAccelBonus : 1);
       this.tmp.set(mx * targetSpeed, 0, mz * targetSpeed);
       this.vel.lerp(this.tmp, Math.min(1, accel * dt / Math.max(0.001, targetSpeed)));
       if (mLen <= 0.05 && this.vel.length() < 0.08) this.vel.set(0, 0, 0);
@@ -189,6 +226,11 @@ export class Player {
         const targetYaw = Math.atan2(dx, dz);
         this.yaw = angleLerp(this.yaw, targetYaw, Math.min(1, dt * 14));
       }
+
+      // Movement noise: sprinting carries a long way, walking less.
+      if (this.sprinting) this.noiseRadius = 23;
+      else if (this.moving) this.noiseRadius = 12;
+      else this.noiseRadius = 0;
 
       // --- weapon switching ---
       const codes = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5'];
@@ -229,13 +271,22 @@ export class Player {
   private syncRig(dt: number): void {
     this.rig.root.position.copy(this.pos);
     this.rig.root.rotation.y = this.yaw;
+    // Shortest-arc yaw delta -> the body banks into turns.
+    let dy = this.yaw - this.lastYaw;
+    while (dy > Math.PI) dy -= Math.PI * 2;
+    while (dy < -Math.PI) dy += Math.PI * 2;
+    const turnRate = dt > 1e-4 ? dy / dt : 0;
+    this.lastYaw = this.yaw;
     this.rig.update(dt, {
       speed: this.speed,
+      sprint: this.sprinting ? 1 : 0,
       aiming: this.aiming,
       firing: this.wishFire,
       reloading: this.weapon.reloading,
       dead: !this.alive,
       crouch: this.crouched,
+      lean: 0,
+      turnRate,
     });
   }
 }

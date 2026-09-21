@@ -12,18 +12,22 @@ visible top-center. Nothing else is required to progress.
 
 ## Controls
 
-Camera: 46° elevation (deliberately low so hostiles read against the skyline),
+Camera: 40° elevation (deliberately low so hostiles read against the skyline),
 45° azimuth, Q/E to orbit, wheel to zoom.
 
 WASD move (camera-relative, diagonals normalized), mouse aim in world space,
 LMB fire, RMB precision aim (0.55× move, spread × weapon aim mult, steadier),
-R reload, G grenade, C/Ctrl crouch, 1–5/Tab weapons, wheel zoom, Q/E camera
-rotation, ESC pause.
+**Shift sprint**, R reload, G grenade, C/Ctrl crouch, 1–5/Tab weapons, wheel
+zoom, Q/E camera rotation, ESC pause.
 
 ## Movement & aiming
 
 - Acceleration 26 / deceleration 30, walk 4.6 m/s, penalties per weapon while
   firing/aiming, 0.5× crouched, collision via circle-vs-AABB + bounds clamp.
+- **Sprint (hold Shift)** — 1.62× walk speed with a 1.35× acceleration bonus,
+  weapon drops to a two-handed carry and aiming is disabled while held: the
+  trade is speed for silence and precision. Sprinting is loud — movement noise
+  radius jumps 12 m → 23 m, so hostiles hear you coming and set up.
 - Mouse raycasts to the ground plane; soldier yaw, weapon, muzzle, and bullet
   trajectories all derive from that single aim point (crosshair → aim →
   muzzle → projectile, verified in code and integration tests).
@@ -32,8 +36,12 @@ rotation, ESC pause.
 
 Rifle (balanced auto), SMG (close-range hose), Shotgun (8-pellet burst),
 DMR (semi, precise, hard-hitting), Pistol (fast backup). Switching cancels
-reload. Ammo: mag + reserve, auto-reload on empty trigger, +reserve and +1
-grenade and +25 armor each round.
+reload. Ammo: mag + reserve, auto-reload on empty trigger.
+
+**Round resupply** — every round change the squad tops you back up: **health to
+full**, every magazine reloaded, reserves restored to at least their starting
+value, grenades reset to 3 and armor raised to at least 50 + 40 (capped at 100).
+A short "RESUPPLIED — HP & AMMO RESTORED" notice fades on the HUD.
 
 ## Damage & survival (see DAMAGE_SYSTEM.md)
 
@@ -78,7 +86,7 @@ Elimination value per archetype + headshot 50 + grenade 75 + multikill chain
 
 ## Threat telegraphing (danger line)
 
-Hostiles are not invisible, but a 46° iso camera hides the ones hugging your
+Hostiles are not invisible, but a 40° iso camera hides the ones hugging your
 flank. `game/vfx/ThreatIndicator.ts` draws an additive **red streak on the
 ground from the soldier toward every hostile inside `THREATS.radius` (21 m)**,
 topped with a **pulsing ring at the hostile's feet**. Intensity scales with
@@ -92,6 +100,33 @@ right, in screen space), and `threatDistance` shows as `⚠ CONTACT — 7m ×2`.
 It is honest information, not omniscience: the streak is anchored on you and
 points at a real, alive, un-occluded-by-nothing hostile — no marker appears for
 dead bodies or hostiles outside the radius.
+
+## Field medkits
+
+The squad drops **health kits** at random open spots around the compound:
+
+- up to **2** live at once, first drop 6–11 s into a round, then one every
+  11–18 s; each kit waits **34 s** before it is reclaimed;
+- a kit only spawns on open floor (cell + all four neighbours walkable), at
+  least **9 m** from you and 5 m from any other kit — no free heals under your
+  feet;
+- walking within 1.35 m restores **30% of max health** (30 HP). A kit is never
+  wasted: at full health you simply walk over it and it stays there;
+- the HUD shows a "+30 HP" pop and the vitals row keeps a running ✚ counter.
+
+## Radar minimap
+
+The top-right radar is a 2D canvas fed from the same snapshot as the HUD: a
+level plan baked once at boot (one baked cell per world metre), rotated so "up"
+is your facing, with your arrow always centred.
+
+- **Red blips = live hostiles**, drawn only while the **danger line is active**
+  (the radar is a threat read-out, not a wallhack — silent campers stay hidden);
+  blips fade with distance inside the 26 m band and pulse-ping;
+- a **bearing wedge** from the centre matches the nearest-threat angle used by
+  the on-screen chevron;
+- **green crosses** mark health kits; the panel border and its label go red
+  ("CONTACT") while the danger line is up.
 
 ## Enemy fallibility
 
