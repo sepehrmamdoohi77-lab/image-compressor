@@ -149,6 +149,18 @@ export class CharacterRig {
     this.hitTimer = 1;
   }
 
+  /** Full pose reset (restart / return-to-menu): standing, no flash, no death. */
+  reset(): void {
+    this.walkPhase = 0;
+    this.fireKick = 0;
+    this.hitTimer = 0;
+    this.deathTimer = 0;
+    this.reloadDip = 0;
+    this.body.rotation.set(0, 0, 0);
+    this.body.position.set(0, 0, 0);
+    this.applyFlash(0);
+  }
+
   update(dt: number, s: RigAnimState): void {
     const t = performance.now() / 1000 + this.rngPhase;
     this.fireKick = Math.max(0, this.fireKick - dt * 9);

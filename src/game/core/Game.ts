@@ -263,6 +263,7 @@ export class Game {
     this.progression.startRun();
     this.player?.reset(this.level?.playerSpawn ?? { x: 0, z: 18 });
     this.cameraRig?.setTarget(this.player?.pos.x ?? 0, 0, this.player?.pos.z ?? 0, true);
+    this.cameraRig?.resetAzimuth();
     this.setState(GameState.LOADING);
     this.loadingTimer = 0.4;
   }
@@ -307,6 +308,7 @@ export class Game {
     this.audio.playUICancel();
     this.clearRunEntities();
     this.player?.reset(this.level?.playerSpawn ?? { x: 0, z: 18 });
+    this.cameraRig?.resetAzimuth();
     this.setState(GameState.MENU);
   }
 
@@ -352,6 +354,11 @@ export class Game {
       return;
     }
 
+    // Q/E -> rotate camera around the soldier.
+    const ROTATE_SPEED = 110; // degrees per second
+    if (this.input.isDown('KeyQ')) this.cameraRig.rotateBy(-ROTATE_SPEED * dt);
+    if (this.input.isDown('KeyE')) this.cameraRig.rotateBy(ROTATE_SPEED * dt);
+
     // Aim point from mouse.
     const rect = this.renderer?.domElement.getBoundingClientRect();
     if (rect) {
@@ -367,8 +374,8 @@ export class Game {
       }
     }
 
-    // Player.
-    p.update(dt, now, this.input, this.aimPoint, this.level, true);
+    // Player (movement stays camera-relative under rotation).
+    p.update(dt, now, this.input, this.aimPoint, this.level, true, this.cameraRig.getAzimuthDeg());
     if (p.wishFire && p.alive) {
       const res = this.combat.playerFire(p, this.enemies, now);
       if (res.fired) {

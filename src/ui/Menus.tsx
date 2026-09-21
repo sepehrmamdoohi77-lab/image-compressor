@@ -39,6 +39,8 @@ export function MainMenu({ game, onSettings, onHelp }: { game: Game; onSettings:
           <span><b>R</b> reload</span>
           <span><b>G</b> grenade</span>
           <span><b>C</b> crouch</span>
+          <span><b>Q / E</b> rotate cam</span>
+          <span><b>TAB</b> cycle weapon</span>
         </div>
       </div>
       <div className="menu-right">
@@ -140,8 +142,9 @@ export function HowToPlay({ onClose }: { onClose: () => void }): JSX.Element {
     ['R', 'Reload. Auto-reloads on empty trigger.'],
     ['G', 'Throw grenade at cursor (limited — +1 per round).'],
     ['C / CTRL (hold)', 'Crouch: hide behind low cover, steadier shots, slower move.'],
-    ['1 – 5 / Q', 'Swap weapon: Rifle · SMG · Shotgun · DMR · Pistol.'],
+    ['1 – 5 / TAB', 'Swap weapon: Rifle · SMG · Shotgun · DMR · Pistol.'],
     ['MOUSE WHEEL', 'Camera zoom.'],
+    ['Q / E', 'Rotate the camera around the soldier.'],
     ['ESC', 'Pause.'],
   ];
   return (

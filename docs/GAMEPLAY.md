@@ -14,7 +14,8 @@ visible top-center. Nothing else is required to progress.
 
 WASD move (camera-relative, diagonals normalized), mouse aim in world space,
 LMB fire, RMB precision aim (0.55× move, spread × weapon aim mult, steadier),
-R reload, G grenade, C/Ctrl crouch, 1–5/Q weapons, wheel zoom, ESC pause.
+R reload, G grenade, C/Ctrl crouch, 1–5/Tab weapons, wheel zoom, Q/E camera
+rotation, ESC pause.
 
 ## Movement & aiming
 

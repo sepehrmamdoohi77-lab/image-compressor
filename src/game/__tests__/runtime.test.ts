@@ -278,4 +278,55 @@ describe('full game runtime', () => {
     expect(s.weaponSlots.length).toBe(5);
     expect(s.roundLabel.length).toBeGreaterThan(0);
   });
+
+  it('restart after death restores standing pose; Q/E rotate the camera', () => {
+    game.startRun();
+    frames(60);
+    expect(game.state).toBe(GameState.PLAYING);
+    const gg = game as unknown as {
+      player: {
+        alive: boolean;
+        health: number;
+        pos: { x: number; z: number };
+        rig: { body: { rotation: { x: number }; position: { y: number } } };
+        takeDamage: (h: number, a: number, n: number) => void;
+      };
+      cameraRig: { getAzimuthDeg: () => number };
+    };
+    // Kill the player -> death pose (fallen).
+    gg.player.takeDamage(99999, 0, game.time);
+    frames(180);
+    expect(game.state).toBe(GameState.DEFEAT);
+    expect(gg.player.rig.body.rotation.x).toBeLessThan(-1);
+
+    // Restart -> standing again with full health.
+    game.restart();
+    frames(60);
+    expect(game.state).toBe(GameState.PLAYING);
+    expect(gg.player.alive).toBe(true);
+    expect(gg.player.health).toBe(100);
+    expect(gg.player.rig.body.rotation.x).toBeCloseTo(0, 2);
+    expect(gg.player.rig.body.position.y).toBeCloseTo(0, 2);
+
+    // Q/E rotate the camera (smoothed, so the key is held).
+    const az0 = gg.cameraRig.getAzimuthDeg();
+    game.input.keys.add('KeyE');
+    frames(30);
+    game.input.keys.delete('KeyE');
+    const az1 = gg.cameraRig.getAzimuthDeg();
+    expect(az1).toBeGreaterThan(az0);
+    game.input.keys.add('KeyQ');
+    frames(30);
+    game.input.keys.delete('KeyQ');
+    const az2 = gg.cameraRig.getAzimuthDeg();
+    expect(az2).toBeLessThan(az1);
+
+    // Movement still works with a rotated camera.
+    const px = gg.player.pos.x;
+    const pz = gg.player.pos.z;
+    game.input.keys.add('KeyW');
+    frames(60);
+    game.input.keys.delete('KeyW');
+    expect(Math.hypot(gg.player.pos.x - px, gg.player.pos.z - pz)).toBeGreaterThan(1);
+  });
 });

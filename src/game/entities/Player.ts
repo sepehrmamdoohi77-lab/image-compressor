@@ -1,6 +1,6 @@
 // Player soldier: movement, aiming, weapons, reload, damage, animation state.
 import * as THREE from 'three';
-import { CAMERA_CONFIG, PLAYER_CONFIG, WEAPON_ORDER, type WeaponId } from '../data/config';
+import { PLAYER_CONFIG, WEAPON_ORDER, type WeaponId } from '../data/config';
 import { WeaponInstance } from '../weapons/Weapons';
 import { CharacterRig } from './CharacterMeshFactory';
 import { buildWeaponMesh, type WeaponMesh } from './WeaponMeshFactory';
@@ -91,6 +91,7 @@ export class Player {
     this.recoil = 0;
     this.aiming = false;
     this.crouched = false;
+    this.rig.reset();
     for (const w of this.weapons.values()) w.reset();
     this.currentId = 'rifle';
     this.refreshWeaponMesh();
@@ -130,6 +131,7 @@ export class Player {
     aimPoint: THREE.Vector3,
     level: Level,
     canAct: boolean,
+    azimuthDeg: number,
   ): void {
     this.aimPoint.copy(aimPoint);
     const w = this.weapon;
@@ -147,7 +149,7 @@ export class Player {
     if (canAct && this.alive) {
       // --- movement (camera-relative) ---
       const { x: ix, y: iy } = input.moveAxes();
-      const az = THREE.MathUtils.degToRad(CAMERA_CONFIG.azimuthDeg);
+      const az = THREE.MathUtils.degToRad(azimuthDeg);
       // Screen-up on ground = away from camera; screen-right = camera right.
       const upX = -Math.sin(az);
       const upZ = -Math.cos(az);
@@ -186,7 +188,7 @@ export class Player {
       for (let i = 0; i < codes.length; i++) {
         if (input.wasPressed(codes[i])) this.equip(WEAPON_ORDER[i]);
       }
-      if (input.wasPressed('KeyQ')) this.cycleWeapon(1);
+      if (input.wasPressed('Tab')) this.cycleWeapon(1);
 
       // --- reload ---
       if (input.wasPressed('KeyR')) w.startReload(now);

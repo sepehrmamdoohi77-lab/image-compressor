@@ -38,8 +38,9 @@ npm test         # unit + headless full-game integration tests
 | R | Reload (auto-reloads on empty trigger) |
 | G | Throw grenade at cursor |
 | C / Ctrl (hold) | Crouch: break line of sight behind low cover, steadier shots |
-| 1–5 / Q | Weapons: Rifle · SMG · Shotgun · DMR · Pistol |
+| 1–5 / TAB | Weapons: Rifle · SMG · Shotgun · DMR · Pistol |
 | Wheel | Camera zoom |
+| Q / E | Rotate camera |
 | ESC | Pause |
 
 ## What is implemented
