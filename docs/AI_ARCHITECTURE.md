@@ -45,9 +45,22 @@ TakingCover → InCover, Flanking, Retreating, Reloading, HitReaction → Dead`.
 
 Gates: player alive, confidence > 0.35, reacted, in range, facing (±0.5 rad),
 muzzle→chest line-of-fire clear, burst discipline (`burstSize`/`burstPause`).
-Aim error (radians) = archetype accuracy term + distance term + target-
-movement + self-movement + crouch-target + post-acquisition bloom. Enemies miss
-realistically; tracers + impacts make misses readable.
+Aim error and fallibility live in `combat/EnemyFire.ts` (pure + unit-tested):
+
+- `enemyAccuracy(accuracy, accuracyMult)` → 0.05..0.95 as difficulty scales.
+- `enemyAimError(input)` → archetype accuracy term + distance term + target
+  movement + self movement + crouch-target + post-acquisition bloom.
+- `enemyMissChance(input)` → deliberate-miss probability from accuracy, target
+  speed, range and suppression, **capped at 0.35** so hostiles stay dangerous.
+- `planEnemyShot(input, rng)` → `{ aimError, miss, lateral, vertical }`; a
+  planned miss offsets the shot 0.55–1.0 m to one side (plus ±0.45 m vertically)
+  so the round cracks past the player instead of connecting.
+- `rayPointDistance(...)` → closest approach of the round to the player, used by
+  `CombatSystem.enemyFire` to fire the whiz-by SFX + camera kick on near misses
+  (`AI.nearMissRadius`, 1.8 m).
+
+Misses stay readable: tracers, wall impacts, near-miss audio. `EnemyFireResult`
+reports `miss` / `nearMiss` for stats and HUD.
 
 ## Cover (`ai/CoverSystem`)
 

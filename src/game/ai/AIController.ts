@@ -6,6 +6,7 @@ import type { Enemy, EnemyStateName } from '../entities/Enemy';
 import type { Player } from '../entities/Player';
 import { cellToWorld, worldToCell, type Level } from '../world/Level';
 import { findPath, smoothPath, nearestOpenCell } from '../world/Navigation';
+import { planEnemyShot } from '../combat/EnemyFire';
 import { eyeHeight, type CombatSystem } from '../systems/CombatSystem';
 import type { CoverSystem } from './CoverSystem';
 import type { SquadAwareness } from './SquadAwareness';
@@ -540,15 +541,21 @@ export class AIController {
       if (now < ai.nextBurstAt) return;
       ai.burstLeft = e.def.burstSize;
     }
-    // Aim error model: archetype accuracy, distance, target/self movement, reaction.
-    const acc = clamp(e.def.accuracy * e.accuracyMult, 0.05, 0.95);
-    let err = AI.aimErrorBase * (1.35 - acc);
-    err += (distP / Math.max(1, e.weapon.def.range)) * 0.035;
-    if (p.moving) err += AI.aimErrorMoveTarget * clamp(p.speed / 4.6, 0, 1);
-    if (e.speed > 0.5) err += AI.aimErrorMoveSelf;
-    if (p.crouched) err += 0.012;
-    if (now - ai.reactionAt < 0.6) err *= 1.6;
-    const res = this.ctx.combat.enemyFire(e, p, err, now);
+    // Gunnery model: aim cone + an occasional deliberate near miss so hostiles
+    // read as human marksmen rather than a laser turret.
+    const plan = planEnemyShot({
+      accuracy: e.def.accuracy,
+      accuracyMult: e.accuracyMult,
+      distance: distP,
+      range: e.weapon.def.range,
+      playerMoving: p.moving,
+      playerSpeed: p.speed,
+      playerCrouched: p.crouched,
+      shooterMoving: e.speed > 0.5,
+      reactionRecent: now - ai.reactionAt < 0.6,
+      suppressed: ai.lastDamageAt > 0 && now - ai.lastDamageAt < 1.2,
+    });
+    const res = this.ctx.combat.enemyFire(e, p, plan, now);
     if (res.fired) {
       e.firing = true;
       ai.burstLeft--;

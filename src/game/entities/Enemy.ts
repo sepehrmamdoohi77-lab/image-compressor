@@ -92,7 +92,8 @@ export class Enemy {
     });
     this.rig.root.scale.setScalar(base.scale);
     this.weaponMesh = buildWeaponMesh(base.weaponId, mats, geos);
-    this.rig.mountWeapon(this.weaponMesh.group);
+    // Two-handed hold: support hand on this weapon's own grip point.
+    this.rig.mountWeapon(this.weaponMesh.group, this.weaponMesh.grip.support);
   }
 
   applyDifficulty(healthMult: number, accuracyMult: number, aggressionMult: number): void {

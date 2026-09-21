@@ -45,6 +45,26 @@ body {
   background: radial-gradient(ellipse at center, transparent 55%, rgba(200, 30, 20, 0.4) 100%);
   animation: pulse 1.1s ease-in-out infinite;
 }
+
+/* proximity danger (hostiles closing in) */
+.danger-edge {
+  position: absolute; inset: 0; pointer-events: none;
+  box-shadow: inset 0 0 130px 34px rgba(224, 42, 26, 0.72);
+  transition: opacity 0.1s linear;
+}
+.danger-arrow { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.danger-arrow .da-tip {
+  position: absolute; left: -15px; top: -40vh; width: 30px; height: 24px;
+  background: linear-gradient(to top, rgba(255, 70, 46, 0.1), rgba(255, 92, 66, 0.98));
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  filter: drop-shadow(0 0 9px rgba(255, 64, 40, 0.85));
+}
+.danger-tag {
+  margin-top: 6px;
+  font-size: 12px; letter-spacing: 1.6px; font-weight: 700;
+  color: #ff6a52; text-shadow: 0 0 10px rgba(255, 60, 40, 0.7);
+  animation: pulse 0.9s ease-in-out infinite;
+}
 @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 
 /* crosshair follows cursor */

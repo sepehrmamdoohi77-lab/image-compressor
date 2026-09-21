@@ -25,7 +25,7 @@ React owns menus/HUD only (`src/ui/`); zero gameplay logic. Game → UI via
   (verified: game-time halts), audio suspended.
 - **Settings**: master/SFX/ambient/UI volumes, zoom sensitivity, camera
   distance, quality — all apply live; reset defaults; corruption-safe storage.
-- **How to play**: full control table + cover/enemy/weapon primers.
+- **How to play**: full control table + cover/enemy/weapon/danger primers.
 - **Round clear**: AREA CLEAR + bonus, auto-continues (3.2 s).
 - **Victory/Defeat**: result, score, 6-stat grid (K/HS/nades/accuracy/rounds/
   fired), RETRY + MENU.
@@ -35,6 +35,21 @@ React owns menus/HUD only (`src/ui/`); zero gameplay logic. Game → UI via
 `clamp()` typography, `vw/vh` spacing with minimums, breakpoints at 1100 px
 (hide brief card) and 760 px/500 px height (compact HUD, hide strips).
 No clipped/overlapping UI at 1280×720, 1920×1080, 2560×1440, 21:9.
+
+## Danger telegraph (in-HUD)
+
+`HudSnapshot` carries `threatLevel`, `threatAngleDeg`, `threatCount` and
+`threatDistance`, produced by `Game.updateThreats()` each frame:
+
+- `.danger-edge` — inset red glow, opacity `threatLevel × 0.85`, hidden below
+  0.04 so a clear map stays clean.
+- `.danger-arrow` — rotated by `threatAngleDeg` (0° = ahead, +90° = right); the
+  `.da-tip` chevron sits 40 vh above centre so it reads at the screen edge.
+- `.danger-tag` — `⚠ CONTACT — 7m ×2` under the objective, shown above 0.3 and
+  only when `threatDistance >= 0` (the −1 sentinel means "nobody nearby").
+
+All three are pointer-transparent and driven by the 10 Hz snapshot poll, so they
+cost no extra React renders beyond the existing HUD tick.
 
 ## Style
 

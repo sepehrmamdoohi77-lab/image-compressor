@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { GameState, type HudSnapshot } from './GameStates';
 import { EventBus } from './EventBus';
 import { InputManager } from './InputManager';
-import { createMaterials, createGeometries, type MaterialLib, type GeometryLib } from '../world/Materials';
+import { createMaterials, createGeometries, createTextures, type MaterialLib, type GeometryLib } from '../world/Materials';
 import { Level } from '../world/Level';
 import { TacticalCamera } from '../camera/TacticalCamera';
 import { Player } from '../entities/Player';
@@ -18,9 +18,14 @@ import { SpawnSystem } from '../systems/SpawnSystem';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 import { SettingsManager } from '../systems/SettingsManager';
 import { ParticleSystem } from '../vfx/ParticleSystem';
+import { ThreatIndicator, type ThreatContact } from '../vfx/ThreatIndicator';
 import { AudioManager } from '../audio/AudioManager';
-import { CAMERA_CONFIG, ROUNDS, WEAPON_ORDER, type EnemyArchetype } from '../data/config';
+import { CAMERA_CONFIG, ROUNDS, THREATS, WEAPON_ORDER, type EnemyArchetype } from '../data/config';
 import { clamp } from '../utils/math';
+
+// Per-frame scratch (no allocation in the hot loop).
+const _camFwd = new THREE.Vector3(0, 0, -1);
+const _camRight = new THREE.Vector3(1, 0, 0);
 
 export class Game {
   state: GameState = GameState.MENU;
@@ -37,6 +42,7 @@ export class Game {
   private mats: MaterialLib | null = null;
   private geos: GeometryLib | null = null;
   private particles: ParticleSystem | null = null;
+  private threats: ThreatIndicator | null = null;
   private combat: CombatSystem | null = null;
   private grenades: GrenadeSystem | null = null;
   private spawns: SpawnSystem | null = null;
@@ -46,6 +52,7 @@ export class Game {
   private enemies: Enemy[] = [];
   private controllers = new Map<number, AIController>();
   private corpses: { enemy: Enemy; removeAt: number }[] = [];
+  private threatContacts: ThreatContact[] = [];
 
   private container: HTMLElement | null = null;
   private rafId = 0;
@@ -89,37 +96,50 @@ export class Game {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMappingExposure = 1.12;
     container.appendChild(this.renderer.domElement);
 
-    this.scene.background = new THREE.Color(0x0b0e11);
-    this.scene.fog = new THREE.Fog(0x0b0e11, 55, 150);
+    // Procedural dusk sky (equirect) doubles as the IBL source below.
+    const textures = createTextures();
+    if (textures?.sky) {
+      this.scene.background = textures.sky;
+      this.scene.backgroundIntensity = 0.9;
+    } else {
+      this.scene.background = new THREE.Color(0x0b0e11);
+    }
+    this.scene.fog = new THREE.Fog(0x39424f, 46, 165);
 
-    // Lighting: key + hemi + two practicals.
-    const hemi = new THREE.HemisphereLight(0x93a7c4, 0x2a251c, 0.6);
+    // Lighting: key (sun) + hemi bounce + rim + practicals.
+    const hemi = new THREE.HemisphereLight(0xa7bcd8, 0x33302a, 0.85);
     this.scene.add(hemi);
-    const key = new THREE.DirectionalLight(0xffe2b8, 1.7);
-    key.position.set(28, 42, 12);
+    const key = new THREE.DirectionalLight(0xffe0b4, 2.05);
+    key.position.set(30, 40, 14);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
-    key.shadow.camera.left = -32;
-    key.shadow.camera.right = 32;
-    key.shadow.camera.top = 32;
-    key.shadow.camera.bottom = -32;
-    key.shadow.camera.far = 120;
+    key.shadow.camera.left = -34;
+    key.shadow.camera.right = 34;
+    key.shadow.camera.top = 34;
+    key.shadow.camera.bottom = -34;
+    key.shadow.camera.far = 130;
     key.shadow.camera.updateProjectionMatrix();
-    key.shadow.bias = -0.0004;
+    key.shadow.bias = -0.00035;
+    key.shadow.normalBias = 0.02;
     this.scene.add(key);
     this.keyLight = key;
-    const plaza = new THREE.PointLight(0xffc37a, 30, 26, 1.9);
+    // Cool rim light opposite the sun: separates silhouettes from the ground.
+    const rim = new THREE.DirectionalLight(0x8fb6ff, 0.5);
+    rim.position.set(-26, 18, -22);
+    this.scene.add(rim);
+    const plaza = new THREE.PointLight(0xffc37a, 38, 30, 1.9);
     plaza.position.set(0, 5.5, 0);
     this.scene.add(plaza);
-    const gate = new THREE.PointLight(0x9adcff, 12, 20, 1.9);
+    const gate = new THREE.PointLight(0x9adcff, 16, 22, 1.9);
     gate.position.set(0, 4.5, -14);
     this.scene.add(gate);
 
-    this.mats = createMaterials();
+    this.mats = createMaterials(textures);
     this.geos = createGeometries();
+    this.applyEnvironment(textures?.sky ?? null);
 
     this.level = new Level(this.mats, this.geos);
     this.level.build();
@@ -131,9 +151,12 @@ export class Game {
     this.cameraRig.setTarget(0, 0, 0, true);
 
     this.particles = new ParticleSystem(this.scene);
+    this.threats = new ThreatIndicator(this.scene);
     this.cover = new CoverSystem(this.level);
     this.player = new Player(this.mats, this.geos);
     this.player.reset(this.level.playerSpawn);
+    // Weapon-specific reload foley (magazine slap vs pump vs bolt).
+    this.player.onReloadComplete = (id) => this.audio.playReload(id);
     this.scene.add(this.player.rig.root);
 
     this.combat = new CombatSystem(
@@ -160,6 +183,23 @@ export class Game {
     this.startLoop();
   }
 
+  /**
+   * Image-based lighting from the sky texture: metals and concrete pick up the
+   * dusk gradient instead of reading flat. Fails soft (headless/stub renderers).
+   */
+  private applyEnvironment(sky: THREE.Texture | null): void {
+    if (!this.renderer || !sky) return;
+    try {
+      const pmrem = new THREE.PMREMGenerator(this.renderer);
+      const env = pmrem.fromEquirectangular(sky).texture;
+      this.scene.environment = env;
+      this.scene.environmentIntensity = 0.45;
+      pmrem.dispose();
+    } catch {
+      // Renderer without real GL (tests) — flat lighting only.
+    }
+  }
+
   private onResize = (): void => {
     if (!this.renderer || !this.container || !this.cameraRig) return;
     const r = this.container.getBoundingClientRect();
@@ -180,6 +220,13 @@ export class Game {
     window.removeEventListener('resize', this.onResize);
     document.removeEventListener('visibilitychange', this.onVisibility);
     this.clearRunEntities();
+    this.threats?.dispose();
+    this.threats = null;
+    // Environment (PMREM cube) + sky background textures are owned by the game.
+    this.scene.environment?.dispose();
+    this.scene.environment = null;
+    (this.scene.background as THREE.Texture | null)?.dispose?.();
+    this.scene.background = null;
     this.audio.dispose();
     this.renderer?.dispose();
     this.renderer?.domElement.remove();
@@ -325,6 +372,8 @@ export class Game {
     this.cover?.reset();
     this.squad.reset();
     this.spawns?.clear();
+    this.threats?.clear();
+    this.threatContacts.length = 0;
     this.damageFlash = 0;
     this.lastHitmarkerAt = 0;
   }
@@ -490,7 +539,23 @@ export class Game {
     this.cameraRig.update(dt);
 
     this.squad.prune(now);
+    this.particles?.setFocus(p.pos.x, p.pos.z);
+    this.updateThreats(dt, p);
     this.particles?.update(dt);
+  }
+
+  /** Red danger streaks toward nearby hostiles + HUD danger read-out. */
+  private updateThreats(dt: number, p: Player): void {
+    if (!this.threats || !this.cameraRig) return;
+    const az = THREE.MathUtils.degToRad(this.cameraRig.getAzimuthDeg());
+    // Ground-plane view basis (screen right = camera right, forward = view dir).
+    _camFwd.set(-Math.sin(az), 0, -Math.cos(az));
+    _camRight.set(-_camFwd.z, 0, _camFwd.x);
+    this.threatContacts.length = 0;
+    for (const e of this.enemies) {
+      this.threatContacts.push({ id: e.id, x: e.pos.x, z: e.pos.z, alive: e.alive, confidence: e.ai.confidence });
+    }
+    this.threats.update(dt, p.pos.x, p.pos.z, this.threatContacts, _camRight, _camFwd);
   }
 
   private updateRoundComplete(dt: number): void {
@@ -612,6 +677,12 @@ export class Game {
       damageFlash: this.damageFlash,
       lowAmmo: (w?.magAmmo ?? 1) <= Math.ceil((w?.def.magSize ?? 30) * 0.25),
       fps: Math.round(this.fpsEma),
+      threatLevel: this.threats?.current.level ?? 0,
+      threatAngleDeg: this.threats?.current.screenAngleDeg ?? 0,
+      threatCount: this.threats?.current.count ?? 0,
+      threatDistance: Number.isFinite(this.threats?.current.nearest ?? Infinity)
+        ? (this.threats?.current.nearest ?? 0)
+        : -1,
     };
   }
 
@@ -645,14 +716,20 @@ export class Game {
     }));
   }
 
+  /**
+   * Quality tiers. HIGH is the full-fidelity path (supersampled pixel ratio,
+   * 4096 contact-accurate shadows, IBL, denser particles and dust); low keeps the
+   * game playable on weak GPUs by dropping resolution, shadows and VFX density.
+   */
   applyQuality(): void {
     if (!this.renderer) return;
     const q = this.settings.data.quality;
     const dpr = window.devicePixelRatio || 1;
-    this.renderer.setPixelRatio(q === 'low' ? 0.75 : q === 'medium' ? Math.min(dpr, 1.25) : Math.min(dpr, 2));
+    const ratio = q === 'low' ? 0.8 : q === 'medium' ? Math.min(dpr, 1.35) : Math.min(dpr, 2);
+    this.renderer.setPixelRatio(ratio);
     this.renderer.shadowMap.enabled = q !== 'low';
     if (this.keyLight) {
-      const s = q === 'low' ? 1024 : q === 'medium' ? 2048 : 2048;
+      const s = q === 'low' ? 1024 : q === 'medium' ? 2048 : 4096;
       if (this.keyLight.shadow.mapSize.x !== s) {
         this.keyLight.shadow.mapSize.set(s, s);
         if (this.keyLight.shadow.map) {
@@ -661,7 +738,10 @@ export class Game {
         }
       }
     }
-    this.particles?.setMultiplier(q === 'low' ? 0.45 : q === 'medium' ? 0.75 : 1);
+    // Image-based lighting is a "medium and up" feature.
+    this.scene.environmentIntensity = q === 'low' ? 0 : 0.45;
+    this.particles?.setMultiplier(q === 'low' ? 0.45 : q === 'medium' ? 0.8 : 1.15);
+    this.particles?.setDetail(q !== 'low');
     // Shadow map size/dispose above takes effect on the next render automatically.
   }
 

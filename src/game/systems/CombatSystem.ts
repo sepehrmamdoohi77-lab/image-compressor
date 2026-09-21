@@ -9,9 +9,10 @@ import type { SquadAwareness } from '../ai/SquadAwareness';
 import type { Player } from '../entities/Player';
 import type { Enemy } from '../entities/Enemy';
 import { weaponDamage, zoneFromHeight, type DamageResult } from '../combat/DamageSystem';
+import { rayPointDistance, type EnemyShotPlan } from '../combat/EnemyFire';
 import { computeSpread } from '../weapons/Weapons';
 import type { WeaponDef, HitZone } from '../data/config';
-import { DAMAGE } from '../data/config';
+import { AI, DAMAGE } from '../data/config';
 import { clamp } from '../utils/math';
 
 export interface CharacterTarget {
@@ -110,8 +111,15 @@ export interface EnemyFireResult {
   fired: boolean;
   hit: boolean;
   headshot: boolean;
+  /** The round was a planned wide shot (did not connect). */
+  miss: boolean;
+  /** The round cracked past the player without hitting (whiz-by). */
+  nearMiss: boolean;
   damage: DamageResult | null;
 }
+
+/** Hostile tracer colour (never player-weapon specific). */
+const ENEMY_TRACER_COLOR = 0xff6a5c;
 
 const _muzzle = new THREE.Vector3();
 const _dir = new THREE.Vector3();
@@ -210,7 +218,7 @@ export class CombatSystem {
     if (def.pellets > 0) {
       this.particles.muzzleFlash(_muzzle, _dir, def.id === 'shotgun' || def.id === 'dmr');
       this.particles.shell(_muzzle, _right);
-      this.audio.playShot(def.soundFreq, def.soundDuration, 0, 0, def.id === 'shotgun');
+      this.audio.playShot(def.sound, 0, 0);
       this.camera.kick(def.kickback, player.yaw);
       if (def.id === 'shotgun') this.camera.addTrauma(0.22);
       else if (def.id === 'dmr') this.camera.addTrauma(0.1);
@@ -223,8 +231,8 @@ export class CombatSystem {
   }
 
   // --- enemy ------------------------------------------------------------------
-  enemyFire(enemy: Enemy, player: Player, aimError: number, now: number): EnemyFireResult {
-    const res: EnemyFireResult = { fired: false, hit: false, headshot: false, damage: null };
+  enemyFire(enemy: Enemy, player: Player, plan: EnemyShotPlan, now: number): EnemyFireResult {
+    const res: EnemyFireResult = { fired: false, hit: false, headshot: false, miss: false, nearMiss: false, damage: null };
     const w = enemy.weapon;
     const def = w.def;
     if (!w.tryFire(now)) return res;
@@ -233,20 +241,32 @@ export class CombatSystem {
     enemy.muzzleWorld(_muzzle);
 
     const pCrouched = player.crouched;
-    _target.set(
-      player.pos.x + (Math.random() - 0.5) * aimError * 10,
-      (pCrouched ? 0.75 : 1.2) + (Math.random() - 0.5) * aimError * 6,
-      player.pos.z + (Math.random() - 0.5) * aimError * 10,
-    );
+    const chestY = pCrouched ? 0.8 : 1.2;
+    // Base direction: muzzle -> centre of mass.
+    _target.set(player.pos.x, chestY, player.pos.z);
+    _dir.copy(_target).sub(_muzzle);
+    const distToTarget = Math.max(0.5, _dir.length());
+    _dir.normalize();
+    // Aim cone: error is angular, so it scales with distance (not world units).
+    const cone = plan.aimError * distToTarget * (plan.miss ? 0.4 : 1);
+    const hLen = Math.hypot(_dir.x, _dir.z);
+    const rx = hLen > 1e-4 ? _dir.z / hLen : 1;
+    const rz = hLen > 1e-4 ? -_dir.x / hLen : 0;
+    const offX = (Math.random() - 0.5) * 2 * cone + rx * plan.lateral;
+    const offY = (Math.random() - 0.5) * 2 * cone * 0.6 + plan.vertical;
+    const offZ = (Math.random() - 0.5) * 2 * cone + rz * plan.lateral;
+    _target.set(_target.x + offX, _target.y + offY, _target.z + offZ);
     _dir.copy(_target).sub(_muzzle);
     _dir.normalize();
     const dir = this.applySpread(_dir, w.bloom * 0.5 + def.spreadBase, 0, 0);
     const wallT = this.level.raycastObstacles(_muzzle.x, _muzzle.y, _muzzle.z, dir.x, dir.y, dir.z, def.range);
-    _hitPoint.copy(_muzzle).addScaledVector(dir, Math.min(wallT, def.range));
+    const maxT = Math.min(wallT, def.range);
+    _hitPoint.copy(_muzzle).addScaledVector(dir, maxT);
+    res.miss = plan.miss;
 
     if (player.alive) {
       const hit = rayVsCharacter(
-        _muzzle.x, _muzzle.y, _muzzle.z, dir.x, dir.y, dir.z, Math.min(wallT, def.range),
+        _muzzle.x, _muzzle.y, _muzzle.z, dir.x, dir.y, dir.z, maxT,
         {
           x: player.pos.x, z: player.pos.z, feetY: 0,
           height: targetHeight(pCrouched, 1), radius: 0.34, armor: player.armor,
@@ -263,12 +283,30 @@ export class CombatSystem {
       } else if (wallT < def.range) {
         this.particles.impact(_hitPoint, 'concrete');
       }
+      // Near miss: the round came close but did not connect — crack + shake, so
+      // the player feels the shot instead of only reading the tracer.
+      if (!res.hit) {
+        const gap = rayPointDistance(
+          _muzzle.x, _muzzle.y, _muzzle.z, dir.x, dir.y, dir.z,
+          player.pos.x, chestY, player.pos.z, maxT,
+        );
+        if (gap < AI.nearMissRadius) {
+          res.nearMiss = true;
+          const closeness = 1 - gap / AI.nearMissRadius;
+          this.camera.addTrauma(0.09 * closeness);
+        }
+      }
     }
-    this.particles.tracer(_muzzle, _hitPoint, 0xff6a5c);
-    this.particles.muzzleFlash(_muzzle, dir, false);
+    // Incoming fire stays red-orange regardless of the hostile's weapon — the
+    // player must be able to tell "that one is shooting at ME" at a glance.
+    this.particles.tracer(_muzzle, _hitPoint, ENEMY_TRACER_COLOR);
+    this.particles.muzzleFlash(_muzzle, dir, def.sound.big);
     const distToPlayer = _muzzle.distanceTo(this.playerPos);
     const pan = this.panFor(_muzzle);
-    this.audio.playShot(def.soundFreq, def.soundDuration, clamp(distToPlayer / 45, 0, 1), pan);
+    this.audio.playShot(def.sound, clamp(distToPlayer / 45, 0, 1), pan);
+    if (res.nearMiss) {
+      this.audio.playNearMiss(pan, clamp(1 - distToPlayer / 30, 0.15, 1), clamp(distToPlayer / 45, 0, 1));
+    }
     return res;
   }
 

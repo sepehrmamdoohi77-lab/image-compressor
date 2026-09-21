@@ -50,11 +50,26 @@ export function HUD({ snap, banner, feed }: Props): JSX.Element {
   const hpLow = snap.health <= 30;
   const acc = snap.shotsFired > 0 ? Math.round((snap.shotsHit / snap.shotsFired) * 100) : 0;
 
+  // Proximity danger: red edge glow + a chevron pointing at the nearest hostile.
+  const danger = Math.max(0, Math.min(1, snap.threatLevel));
+  const dangerOn = danger > 0.04 && snap.threatCount > 0;
+
   return (
     <div className="hud">
       {/* damage vignette */}
       <div className="vignette" style={{ opacity: snap.damageFlash }} />
       {hpLow && <div className="lowhp" />}
+
+      {/* proximity danger: hostiles closing in */}
+      <div className="danger-edge" style={{ opacity: danger * 0.85 }} />
+      {dangerOn && (
+        <div
+          className="danger-arrow"
+          style={{ transform: `translate(-50%, -50%) rotate(${snap.threatAngleDeg}deg)`, opacity: 0.35 + danger * 0.65 }}
+        >
+          <span className="da-tip" />
+        </div>
+      )}
 
       {/* crosshair + hitmarker (positioned at cursor) */}
       <div ref={crossRef} className="crosshair" style={{ transform: 'translate(-100px,-100px)' }}>
@@ -80,6 +95,11 @@ export function HUD({ snap, banner, feed }: Props): JSX.Element {
           </span>
         </div>
         {snap.reloading && <div className="reloading-tag">RELOADING…</div>}
+        {danger > 0.3 && snap.threatDistance >= 0 && (
+          <div className="danger-tag">
+            ⚠ CONTACT — {Math.round(snap.threatDistance)}m {snap.threatCount > 1 ? `×${snap.threatCount}` : ''}
+          </div>
+        )}
       </div>
 
       {/* score */}

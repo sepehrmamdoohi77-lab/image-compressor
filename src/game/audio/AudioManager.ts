@@ -1,6 +1,6 @@
 // Web Audio synthesized SFX: no external assets, positional volume/pan,
 // separate Master/SFX/Music/UI buses. Created lazily on user gesture.
-import { AUDIO_DEFAULTS } from '../data/config';
+import { AUDIO_DEFAULTS, type WeaponId, type WeaponSound } from '../data/config';
 import { clamp } from '../utils/math';
 
 export interface VolumeSettings {
@@ -132,18 +132,59 @@ export class AudioManager {
   }
 
   // --- game sounds ---------------------------------------------------------------
-  /** distance01: 0 = at player, 1 = max audible. */
-  playShot(soundFreq: number, soundDuration: number, distance01: number, pan = 0, big = false): void {
-    const v = (big ? 0.75 : 0.5) * (1 - clamp(distance01, 0, 1) * 0.85);
-    this.noise(this.sfxBus, soundDuration + 0.06, soundFreq * 8, 'lowpass', v, pan);
-    this.tone(this.sfxBus, soundFreq, soundFreq * 0.4, soundDuration, 'square', v * 0.5, pan);
-    if (big) this.tone(this.sfxBus, 70, 32, 0.25, 'sine', v * 0.7, pan);
+  /**
+   * Layered gunshot from a weapon's own acoustic profile: supersonic crack +
+   * low body thump + gas noise + mechanical action + compound echo tail.
+   * distance01: 0 = at player, 1 = max audible.
+   */
+  playShot(sound: WeaponSound, distance01: number, pan = 0): void {
+    const atten = 1 - clamp(distance01, 0, 1) * 0.85;
+    const v = (sound.big ? 0.85 : 0.55) * atten;
+    // 1. Crack — the directional snap that identifies the weapon.
+    this.tone(this.sfxBus, sound.crackFreq * 2.3, sound.crackFreq * 0.72, sound.duration * 0.6, 'square', v * 0.34, pan);
+    // 2. Body — chest thump (pitch is the weapon's "weight").
+    this.tone(this.sfxBus, sound.bodyFreq, sound.bodyFreq * 0.55, sound.duration, 'sine', v * 0.6, pan);
+    // 3. Gas / muzzle blast noise.
+    this.noise(this.sfxBus, sound.duration + 0.04, sound.noiseFreq, sound.noiseType, v * 0.85, pan);
+    if (sound.big) this.tone(this.sfxBus, sound.bodyFreq * 0.72, 26, sound.duration * 1.1, 'sine', v * 0.8, pan);
+    // 4. Action rattle (bolt / shell / charging handle).
+    if (sound.mech > 0.05) {
+      this.noise(this.sfxBus, 0.06, 2800, 'highpass', v * 0.2 * sound.mech, pan, sound.duration * 0.45);
+    }
+    // 5. Echo off the compound walls (only audible up close).
+    if (sound.tail > 0.05 && distance01 < 0.9) {
+      this.noise(this.sfxBus, sound.tail, Math.max(320, sound.noiseFreq * 0.45), 'lowpass', v * 0.28, pan, sound.duration * 0.7);
+    }
   }
 
-  playReload(): void {
-    this.noise(this.sfxBus, 0.07, 2500, 'bandpass', 0.35);
-    this.noise(this.sfxBus, 0.09, 1600, 'bandpass', 0.4, 0, 0.18);
-    this.tone(this.sfxBus, 320, 180, 0.08, 'square', 0.18, 0, 0.32);
+  /** Weapon-specific reload foley: magazine-fed vs pump vs bolt. */
+  playReload(weaponId: WeaponId): void {
+    switch (weaponId) {
+      case 'shotgun':
+        this.noise(this.sfxBus, 0.12, 1800, 'bandpass', 0.4); // pump back
+        this.noise(this.sfxBus, 0.14, 1100, 'bandpass', 0.44, 0, 0.22); // pump forward
+        this.tone(this.sfxBus, 210, 150, 0.09, 'square', 0.2, 0, 0.36);
+        this.noise(this.sfxBus, 0.1, 2400, 'bandpass', 0.28, 0, 0.52); // shell seats
+        break;
+      case 'dmr':
+        this.tone(this.sfxBus, 300, 190, 0.1, 'square', 0.22); // bolt up
+        this.noise(this.sfxBus, 0.09, 2300, 'bandpass', 0.32, 0, 0.2);
+        this.noise(this.sfxBus, 0.08, 2700, 'bandpass', 0.34, 0, 0.42); // bolt home
+        break;
+      default:
+        this.noise(this.sfxBus, 0.06, 2600, 'bandpass', 0.3); // mag release
+        this.noise(this.sfxBus, 0.08, 1400, 'bandpass', 0.38, 0, 0.22); // mag seats
+        this.tone(this.sfxBus, 340, 190, 0.08, 'square', 0.2, 0, 0.4); // charging handle
+        break;
+    }
+  }
+
+  /** Bullet whiz-by: the round cracked past the player's head. */
+  playNearMiss(pan: number, closeness: number, distance01 = 0): void {
+    const v = 0.42 * clamp(closeness, 0, 1) * (1 - clamp(distance01, 0, 1) * 0.5);
+    this.tone(this.sfxBus, 2450, 760, 0.085, 'sine', v * 0.4, pan);
+    this.noise(this.sfxBus, 0.08, 4200, 'highpass', v * 0.5, pan);
+    this.noise(this.sfxBus, 0.17, 1100, 'bandpass', v * 0.22, pan, 0.03);
   }
 
   playDryFire(): void {

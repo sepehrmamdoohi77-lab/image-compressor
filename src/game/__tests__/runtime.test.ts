@@ -279,6 +279,39 @@ describe('full game runtime', () => {
     expect(s.roundLabel.length).toBeGreaterThan(0);
   });
 
+  it('telegraphs nearby danger (red line data) through the HUD snapshot', () => {
+    game.startRun();
+    frames(300);
+
+    const gg = game as unknown as {
+      enemies: { alive: boolean; pos: { set: (x: number, y: number, z: number) => void } }[];
+      player: { pos: { x: number; z: number } };
+    };
+    expect(gg.enemies.length).toBeGreaterThan(0);
+
+    // Push every hostile far away: the danger channel must go fully dark.
+    for (const e of gg.enemies) e.pos.set(gg.player.pos.x + 60, 0, gg.player.pos.z + 60);
+    frames(4);
+    const clear = game.getSnapshot();
+    expect(clear.threatLevel).toBe(0);
+    expect(clear.threatCount).toBe(0);
+    expect(clear.threatDistance).toBe(-1);
+
+    // A hostile closing to 4m lights the danger line + HUD read-out.
+    const hostile = gg.enemies.find((e) => e.alive);
+    expect(hostile).toBeTruthy();
+    hostile!.pos.set(gg.player.pos.x + 4, 0, gg.player.pos.z);
+    frames(4);
+
+    const snap = game.getSnapshot();
+    expect(snap.threatCount).toBeGreaterThan(0);
+    expect(snap.threatLevel).toBeGreaterThan(0.3);
+    expect(snap.threatDistance).toBeGreaterThan(2);
+    expect(snap.threatDistance).toBeLessThan(20);
+    expect(Number.isFinite(snap.threatAngleDeg)).toBe(true);
+    expect(Math.abs(snap.threatAngleDeg)).toBeLessThanOrEqual(180);
+  });
+
   it('restart after death restores standing pose; Q/E rotate the camera', () => {
     game.startRun();
     frames(60);
@@ -306,7 +339,8 @@ describe('full game runtime', () => {
     expect(gg.player.alive).toBe(true);
     expect(gg.player.health).toBe(100);
     expect(gg.player.rig.body.rotation.x).toBeCloseTo(0, 2);
-    expect(gg.player.rig.body.position.y).toBeCloseTo(0, 2);
+    // Standing height (only the idle breathing bob remains).
+    expect(Math.abs(gg.player.rig.body.position.y)).toBeLessThan(0.05);
 
     // Q/E rotate the camera (smoothed, so the key is held).
     const az0 = gg.cameraRig.getAzimuthDeg();

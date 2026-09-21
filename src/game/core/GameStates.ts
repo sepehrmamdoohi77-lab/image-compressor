@@ -40,4 +40,12 @@ export interface HudSnapshot {
   damageFlash: number; // 0..1 recent damage intensity
   lowAmmo: boolean;
   fps: number;
+  /** 0..1 proximity danger (nearest hostile closing in). */
+  threatLevel: number;
+  /** Bearing of the nearest hostile on screen: 0 = ahead, +90 = right. */
+  threatAngleDeg: number;
+  /** Hostiles currently inside the danger radius. */
+  threatCount: number;
+  /** Distance to the nearest hostile in metres (-1 = none nearby). */
+  threatDistance: number;
 }

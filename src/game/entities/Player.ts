@@ -31,6 +31,8 @@ export class Player {
   rig: CharacterRig;
   weaponMeshes = new Map<WeaponId, WeaponMesh>();
   radius = 0.35;
+  /** Fired when a reload completes (weapon-specific foley lives in AudioManager). */
+  onReloadComplete: ((id: WeaponId) => void) | null = null;
 
   private tmp = new THREE.Vector3();
 
@@ -77,7 +79,8 @@ export class Player {
   private refreshWeaponMesh(): void {
     this.rig.clearWeapon();
     const mesh = this.weaponMeshes.get(this.currentId);
-    if (mesh) this.rig.mountWeapon(mesh.group);
+    // Support hand goes to THIS weapon's grip point -> two-handed hold.
+    if (mesh) this.rig.mountWeapon(mesh.group, mesh.grip.support);
   }
 
   reset(spawn: { x: number; z: number }): void {
@@ -124,6 +127,12 @@ export class Player {
     return mesh.muzzle.getWorldPosition(out);
   }
 
+  /** Support-hand world position (two-hand grip verification / muzzle smoke). */
+  supportHandWorld(out: THREE.Vector3): THREE.Vector3 {
+    this.rig.root.updateMatrixWorld(true);
+    return this.rig.handL.getWorldPosition(out);
+  }
+
   update(
     dt: number,
     now: number,
@@ -136,9 +145,7 @@ export class Player {
     this.aimPoint.copy(aimPoint);
     const w = this.weapon;
     const reloadDone = w.update(now, dt);
-    if (reloadDone) {
-      // handled by Game via polling? No — Game checks weapon.reloading transitions.
-    }
+    if (reloadDone) this.onReloadComplete?.(this.currentId);
 
     // Recoil recovery.
     this.recoil = Math.max(0, this.recoil - w.def.recoilRecovery * dt * 0.02);

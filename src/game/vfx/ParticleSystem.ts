@@ -142,6 +142,10 @@ interface Flash {
   grow: number;
 }
 
+const DUST_COUNT = 340;
+const DUST_RADIUS = 26;
+const DUST_HEIGHT = 8;
+
 export class ParticleSystem {
   private additive: PointPool;
   private alpha: PointPool;
@@ -151,6 +155,13 @@ export class ParticleSystem {
   private lightLife: number[] = [];
   private mult = 1;
   private tmpColor = new THREE.Color();
+  // Ambient dust motes: slow-drifting specks that catch the warm light and give
+  // the iso view depth. Wrapped in a box that follows the camera focus.
+  private dust: THREE.Points | null = null;
+  private dustPos = new Float32Array(DUST_COUNT * 3);
+  private dustVel = new Float32Array(DUST_COUNT * 3);
+  private focus = new THREE.Vector3();
+  private detail = true;
 
   constructor(private scene: THREE.Scene) {
     const tex = makeDotTexture();
@@ -186,10 +197,75 @@ export class ParticleSystem {
       this.lights.push(l);
       this.lightLife.push(0);
     }
+    this.buildDust(scene, tex);
+  }
+
+  private buildDust(scene: THREE.Scene, tex: THREE.Texture): void {
+    for (let i = 0; i < DUST_COUNT; i++) {
+      this.dustPos[i * 3] = (Math.random() * 2 - 1) * DUST_RADIUS;
+      this.dustPos[i * 3 + 1] = Math.random() * DUST_HEIGHT;
+      this.dustPos[i * 3 + 2] = (Math.random() * 2 - 1) * DUST_RADIUS;
+      this.dustVel[i * 3] = 0.16 + Math.random() * 0.2;
+      this.dustVel[i * 3 + 1] = (Math.random() - 0.5) * 0.12;
+      this.dustVel[i * 3 + 2] = (Math.random() - 0.5) * 0.16;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(this.dustPos, 3));
+    const mat = new THREE.PointsMaterial({
+      size: 0.075,
+      map: tex,
+      color: 0xffe0bb,
+      transparent: true,
+      opacity: 0.32,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true,
+    });
+    const pts = new THREE.Points(geo, mat);
+    pts.frustumCulled = false;
+    pts.renderOrder = 3;
+    scene.add(pts);
+    this.dust = pts;
   }
 
   setMultiplier(m: number): void {
     this.mult = m;
+  }
+
+  /** High quality enables ambient dust; low quality drops it for headroom. */
+  setDetail(on: boolean): void {
+    this.detail = on;
+    if (this.dust) this.dust.visible = on;
+  }
+
+  /** Camera focus point; the dust box is wrapped around it. */
+  setFocus(x: number, z: number): void {
+    this.focus.set(x, 0, z);
+  }
+
+  private updateDust(dt: number): void {
+    const pts = this.dust;
+    if (!pts || !this.detail) return;
+    const p = this.dustPos;
+    const v = this.dustVel;
+    const t = performance.now() / 1000;
+    for (let i = 0; i < DUST_COUNT; i++) {
+      const i3 = i * 3;
+      const sway = Math.sin(t * 0.35 + i) * 0.16;
+      p[i3] += (v[i3] + sway) * dt;
+      p[i3 + 1] += (v[i3 + 1] + Math.sin(t * 0.6 + i * 0.7) * 0.05) * dt;
+      p[i3 + 2] += (v[i3 + 2] + sway * 0.4) * dt;
+      // Wrap into the moving box so density stays constant wherever we walk.
+      const dx = p[i3] - this.focus.x;
+      const dz = p[i3 + 2] - this.focus.z;
+      if (dx > DUST_RADIUS) p[i3] -= DUST_RADIUS * 2;
+      else if (dx < -DUST_RADIUS) p[i3] += DUST_RADIUS * 2;
+      if (dz > DUST_RADIUS) p[i3 + 2] -= DUST_RADIUS * 2;
+      else if (dz < -DUST_RADIUS) p[i3 + 2] += DUST_RADIUS * 2;
+      if (p[i3 + 1] > DUST_HEIGHT) p[i3 + 1] = 0.05;
+      else if (p[i3 + 1] < 0.02) p[i3 + 1] = DUST_HEIGHT;
+    }
+    (pts.geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
   }
 
   private count(n: number): number {
@@ -336,6 +412,7 @@ export class ParticleSystem {
   update(dt: number): void {
     this.additive.update(dt);
     this.alpha.update(dt);
+    this.updateDust(dt);
     for (const t of this.tracers) {
       if (t.life <= 0) continue;
       t.life -= dt;

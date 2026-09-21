@@ -22,8 +22,10 @@ export const WORLD = {
 } as const;
 
 // --- Camera ------------------------------------------------------------------
+// Lower elevation (was 55°) tilts the view closer to the horizon so the player
+// sees hostile silhouettes against the skyline: much better target visibility.
 export const CAMERA_CONFIG = {
-  elevationDeg: 55,
+  elevationDeg: 46,
   azimuthDeg: 45,
   distance: 21,
   minDistance: 12,
@@ -52,10 +54,30 @@ export const PLAYER_CONFIG = {
   maxGrenades: 4,
 } as const;
 
+export interface WeaponSound {
+  /** Muzzle crack layer frequency (Hz) — sharp, directional snap. */
+  crackFreq: number;
+  /** Low body/chest thump layer (Hz). */
+  bodyFreq: number;
+  /** Gas/mechanical noise band center (Hz). */
+  noiseFreq: number;
+  noiseType: BiquadFilterType;
+  /** Main body length (seconds). */
+  duration: number;
+  /** Slap-back echo/decay tail (seconds) — longer in a walled compound. */
+  tail: number;
+  /** Mechanical rattle (bolt/shell) amount 0..1. */
+  mech: number;
+  /** Heavy boom layer (shotgun-class). */
+  big: boolean;
+}
+
 export interface WeaponDef {
   id: WeaponId;
   name: string;
   category: string;
+  /** Per-weapon acoustic signature (each gun must sound like itself). */
+  sound: WeaponSound;
   damage: number;
   armorDamageMult: number; // multiplies damage dealt to armor pool
   magSize: number;
@@ -89,6 +111,8 @@ export interface WeaponDef {
 export const WEAPONS: Record<WeaponId, WeaponDef> = {
   rifle: {
     id: 'rifle', name: 'AR-7 “Jackal”', category: 'Assault Rifle',
+    // Mid crack, dry mechanical rattle, short tail: the workhorse.
+    sound: { crackFreq: 265, bodyFreq: 112, noiseFreq: 2100, noiseType: 'bandpass', duration: 0.13, tail: 0.24, mech: 0.5, big: false },
     damage: 24, armorDamageMult: 1.0, magSize: 30, startReserve: 180, maxReserve: 300,
     rpm: 540, reloadTime: 1.9, recoilPitch: 0.011, recoilYaw: 0.006, recoilRecovery: 3.2,
     spreadBase: 0.012, spreadMove: 0.02, spreadShot: 0.004, spreadMax: 0.075, spreadAimMult: 0.45,
@@ -99,6 +123,8 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
   },
   smg: {
     id: 'smg', name: 'VK-9 “Hornet”', category: 'SMG',
+    // High, tight buzz — fast decay, lots of rattle, little tail.
+    sound: { crackFreq: 430, bodyFreq: 148, noiseFreq: 3400, noiseType: 'bandpass', duration: 0.075, tail: 0.1, mech: 0.75, big: false },
     damage: 15, armorDamageMult: 0.7, magSize: 40, startReserve: 240, maxReserve: 400,
     rpm: 800, reloadTime: 1.6, recoilPitch: 0.008, recoilYaw: 0.007, recoilRecovery: 3.6,
     spreadBase: 0.022, spreadMove: 0.026, spreadShot: 0.0035, spreadMax: 0.095, spreadAimMult: 0.5,
@@ -109,6 +135,8 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
   },
   shotgun: {
     id: 'shotgun', name: 'M500 “Breacher”', category: 'Shotgun',
+    // Deep boom + long gas tail: unmistakably a 12-gauge.
+    sound: { crackFreq: 118, bodyFreq: 58, noiseFreq: 780, noiseType: 'lowpass', duration: 0.3, tail: 0.42, mech: 0.95, big: true },
     damage: 11, armorDamageMult: 0.8, magSize: 6, startReserve: 42, maxReserve: 60,
     rpm: 70, reloadTime: 2.6, recoilPitch: 0.055, recoilYaw: 0.02, recoilRecovery: 2.2,
     spreadBase: 0.055, spreadMove: 0.03, spreadShot: 0.01, spreadMax: 0.11, spreadAimMult: 0.6,
@@ -119,6 +147,8 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
   },
   dmr: {
     id: 'dmr', name: 'LR-12 “Longeye”', category: 'DMR',
+    // Hard supersonic crack with a long rolling echo across the compound.
+    sound: { crackFreq: 205, bodyFreq: 88, noiseFreq: 4300, noiseType: 'highpass', duration: 0.19, tail: 0.6, mech: 0.28, big: false },
     damage: 62, armorDamageMult: 1.6, magSize: 10, startReserve: 60, maxReserve: 100,
     rpm: 170, reloadTime: 2.2, recoilPitch: 0.03, recoilYaw: 0.009, recoilRecovery: 2.8,
     spreadBase: 0.004, spreadMove: 0.028, spreadShot: 0.012, spreadMax: 0.06, spreadAimMult: 0.3,
@@ -129,6 +159,8 @@ export const WEAPONS: Record<WeaponId, WeaponDef> = {
   },
   pistol: {
     id: 'pistol', name: 'P9 “Sidearm”', category: 'Pistol',
+    // Bright snappy pop, tight and dry (little low end, no echo).
+    sound: { crackFreq: 540, bodyFreq: 172, noiseFreq: 2700, noiseType: 'bandpass', duration: 0.085, tail: 0.12, mech: 0.22, big: false },
     damage: 20, armorDamageMult: 0.9, magSize: 12, startReserve: 84, maxReserve: 144,
     rpm: 320, reloadTime: 1.3, recoilPitch: 0.014, recoilYaw: 0.007, recoilRecovery: 4.0,
     spreadBase: 0.011, spreadMove: 0.018, spreadShot: 0.005, spreadMax: 0.07, spreadAimMult: 0.45,
@@ -292,6 +324,41 @@ export const AI = {
   squadShareRadius: 30,
   squadShareNoise: 3.5,
   squadConfFactor: 0.6,
+
+  // --- Enemy shooting fallibility ---------------------------------------------
+  // Hostiles should miss sometimes — a perfect volley feels robotic. Misses are
+  // deliberate near-misses (the round cracks past the player) rather than pure
+  // random cone scatter, so they read as "close" instead of "broken".
+  missChanceBase: 0.08, // at max accuracy
+  missChanceAccuracyScale: 0.3, // extra chance as accuracy drops
+  missChanceMoving: 0.1, // bonus when the player is running
+  missChanceDistance: 0.07, // bonus at max weapon range
+  missChanceSuppressed: 0.08, // bonus right after the shooter is hit / re-acquiring
+  /** Lateral offset (m) applied to a deliberate miss — near misses stay close. */
+  missLateral: 1.0,
+  /** Vertical offset (m) applied to a deliberate miss. */
+  missVertical: 0.45,
+  /** A round passing closer than this is a "near miss": whiz + shake. */
+  nearMissRadius: 1.8,
+} as const;
+
+/** Readability aid: "danger" telegraphed when hostiles close in on the player. */
+export const THREATS = {
+  /** Hostiles inside this radius get a red danger line on the ground. */
+  radius: 21,
+  /** Hard cap on simultaneous ground indicators. */
+  maxIndicators: 6,
+  /** Enemies closer than this drive the HUD danger edge to full intensity. */
+  hudCloseRadius: 8,
+  /** Distance at which the HUD danger edge starts to appear. */
+  hudFarRadius: 26,
+  /** Aware hostiles (they know where you are) read as a stronger threat. */
+  awareBoost: 1.4,
+  /** Danger pulse frequency (Hz). */
+  pulseHz: 2.4,
+  /** Ring pulse radius range at the hostile's feet. */
+  ringMin: 0.45,
+  ringMax: 1.1,
 } as const;
 
 // --- Audio ----------------------------------------------------------------------

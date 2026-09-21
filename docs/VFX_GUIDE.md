@@ -25,7 +25,32 @@ allocation, everything self-cleans (fades/parks automatically).
 
 CPU integrates position/velocity/gravity/drag per frame into buffer
 attributes (`needsUpdate`); dead particles park at y=−100. Counts scale with
-quality (`setMultiplier` 0.45/0.75/1.0).
+quality (`setMultiplier` 0.45/0.8/1.15) and ambient dust is gated by
+`setDetail(q !== 'low')`.
+
+## Ambient dust (atmosphere)
+
+340 additive motes (`size 0.075`, opacity 0.32) drift with a slow sine sway and
+wrap inside a 26 m × 8 m box centred on `setFocus(player)` — density stays
+constant wherever the player walks, at the cost of one buffer upload per frame.
+
+## Threat indicator (`vfx/ThreatIndicator.ts`)
+
+Pooled (≤ `THREATS.maxIndicators`) additive geometry that answers "where is the
+danger?":
+
+- **Ground streak** — a 5-vertex strip (tapered line + arrow flare + tip) laid at
+  y = 0.06 from the soldier toward each nearby hostile, built with per-vertex RGBA
+  (bright core, fading tail, soft edges). Width and alpha pulse at
+  `THREATS.pulseHz`; alpha scales with proximity, boosted by `awareBoost` when the
+  hostile knows where you are.
+- **Threat ring** — a pooled `RingGeometry` pulsing at the hostile's feet, sized
+  by proximity.
+- **Read-out** — `update()` returns `{ level, screenAngleDeg, nearest, count }`:
+  the HUD edge glow, the bearing chevron and the `⚠ CONTACT` distance tag.
+
+Streaks are hidden (not faded) when nothing is inside `THREATS.radius`, and
+`clear()` resets everything on restart/menu.
 
 ## Scene lighting (see Game.init)
 

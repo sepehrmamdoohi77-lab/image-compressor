@@ -1,6 +1,6 @@
 # TESTING
 
-`npm test` (vitest) — **61 tests, 4 files**, all passing.
+`npm test` (vitest) — **78 tests, 5 files**, all passing.
 
 ## Suites (`src/game/__tests__/`)
 
@@ -16,7 +16,7 @@
   reachability, band); spawn validation accept/reject; scoring (bonuses,
   multikill reset, round growth, accuracy/no-damage, full advancement);
   settings validation (accept/garbage/null/clamp).
-- **runtime.test.ts** (6): boots the REAL `Game` with only WebGLRenderer + DOM
+- **runtime.test.ts** (8): boots the REAL `Game` with only WebGLRenderer + DOM
   stubbed, fake clock, `console.error` spy (must stay silent):
   1. menu boot + black-screen QA (renderer/canvas/camera/size/loop/meshes/
      lights/player/map/fps),
@@ -24,7 +24,30 @@
   3. enemy spawn/navigation/perception/combat states,
   4. full 5-round playthrough → VICTORY with score,
   5. death → DEFEAT, restart, pause time-freeze, resume, menu,
-  6. HUD snapshot completeness/finiteness.
+  6. HUD snapshot completeness/finiteness,
+  7. danger telegraph: level 0 / `threatDistance` −1 when the area is clear,
+     then > 0.3 with a finite bearing once a hostile closes to 4 m,
+  8. restart restores the standing pose (death → DEFEAT → restart) and Q/E
+     orbit the camera while WASD stays camera-relative.
+- **presentation.test.ts** (15): the player-visible guarantees —
+  - camera framing: elevation < 55°, camera height ≈ 15.1 m and a larger
+    horizontal stand-off than the old 55° rig;
+  - weapon identity: all five silhouettes have distinct part counts, barrel
+    length ordering pistol < SMG < rifle < DMR, and five unique sound profiles
+    with per-class checks (shotgun boom, SMG snap, DMR echo);
+  - two-handed grip: support hand within 9 cm of each weapon's own `grip.support`
+    (12 cm for the trigger hand), still on the weapon while running/firing, and
+    dropping then returning during a reload;
+  - enemy fallibility: miss chance inside (0.05, 0.35], growing with target
+    movement / range / suppression, deliberate misses ≤ `AI.missLateral` and
+    inside `AI.nearMissRadius`, deterministic `planEnemyShot` via injected RNG,
+    and `rayPointDistance` near-miss geometry (including behind-shooter and
+    wall-short cases);
+  - danger telegraph: dark when clear, one streak per nearby hostile (corpses and
+    distant hostiles ignored), bearing 0° ahead / +90° right, hotter as threats
+    close;
+  - graphics fallbacks: `createTextures()` returns null headless while materials
+    still build, and shared geometry is tessellated finely.
 
 ## Manual runtime QA (42-step procedure)
 

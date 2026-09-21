@@ -81,7 +81,7 @@ runs (`loopRunning` guard; `init()` is idempotent).
 
 ## UE5 portability
 
-Pure modules (`combat/DamageSystem`, `world/Navigation`, `weapons/Weapons`
-rules, `ai/CoverSystem` scoring, `systems/*` validation, `data/config`) have no
-Three.js dependency and map 1:1 to UE5 C++/Blueprint logic. See
-UE5_MIGRATION_GUIDE.md.
+Pure modules (`combat/DamageSystem`, `combat/EnemyFire`, `world/Navigation`,
+`weapons/Weapons` rules, `ai/CoverSystem` scoring, `systems/*` validation,
+`data/config`) have no Three.js dependency and map 1:1 to UE5 C++/Blueprint
+logic. See UE5_MIGRATION_GUIDE.md.

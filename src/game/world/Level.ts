@@ -52,6 +52,7 @@ export class Level {
     this.buildGround();
     this.buildLayout();
     this.buildProps();
+    this.buildDetails();
     this.generateCoverPoints();
     this.setupSpawns();
   }
@@ -366,6 +367,111 @@ export class Level {
     lintel(6, 7, 10); lintel(36, 37, 10);
     lintel(7, 8, 30); lintel(35, 36, 30);
     lintel(7, 8, 37); lintel(35, 36, 37);
+  }
+
+  // ---- visual detail pass (no collision, extra silhouette + surface break-up) ----
+  private buildDetails(): void {
+    const box = (
+      mat: THREE.Material, x: number, y: number, z: number,
+      w: number, h: number, d: number, ry = 0, rx = 0,
+    ): THREE.Mesh => {
+      const m = new THREE.Mesh(this.geos.box, mat);
+      m.position.set(x, y, z);
+      m.scale.set(w, h, d);
+      if (ry !== 0) m.rotation.y = ry;
+      if (rx !== 0) m.rotation.x = rx;
+      m.castShadow = true;
+      m.receiveShadow = true;
+      this.group.add(m);
+      this.meshes.push(m);
+      return m;
+    };
+
+    // Roof parapets on the solid structures (tops read as built-up, not slabs).
+    const parapetCells: [number, number][] = [
+      [5, 18], [19, 18], [6, 30], [35, 30], [5, 17], [36, 18],
+    ];
+    for (const [cx, cz] of parapetCells) {
+      box(this.mats.concreteDark, cellToWorld(cx), 3.72, cellToWorld(cz), 3.2, 0.34, 2.2);
+    }
+
+    // Sandbag stacks: three courses high with a stepped top (classic cover look).
+    const sandbagAt = (cx: number, cz: number, ry: number): void => {
+      const x = cellToWorld(cx);
+      const z = cellToWorld(cz);
+      for (let row = 0; row < 3; row++) {
+        const w = row === 2 ? 1.1 : 1.5;
+        box(this.mats.sandbag, x, 0.14 + row * 0.26, z, w, 0.22, 1.0, ry + (row % 2 ? 0.06 : -0.06));
+      }
+    };
+    sandbagAt(14, 16, 0.1); sandbagAt(29, 16, -0.15);
+    sandbagAt(16, 27, 0.25); sandbagAt(27, 27, -0.05);
+
+    // Gravel / rubble piles (cone-ish cylinders) around the plaza edges.
+    const pile = (cx: number, cz: number, s: number): void => {
+      const m = new THREE.Mesh(this.geos.cylinder, this.mats.dirt);
+      m.position.set(cellToWorld(cx), s * 0.12, cellToWorld(cz));
+      m.scale.set(s, s * 0.26, s * 1.2);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      this.group.add(m);
+      this.meshes.push(m);
+    };
+    pile(17, 21, 1.5); pile(26, 23, 1.2); pile(11, 20, 1.0); pile(33, 22, 1.3);
+
+    // Puddles: thin dark planes that pick up the sky reflection.
+    const puddle = (cx: number, cz: number, s: number): void => {
+      const m = new THREE.Mesh(this.geos.plane, this.mats.glass);
+      m.rotation.x = -Math.PI / 2;
+      m.position.set(cellToWorld(cx), 0.035, cellToWorld(cz));
+      m.scale.set(s, s * 1.4, 1);
+      this.group.add(m);
+      this.meshes.push(m);
+    };
+    puddle(21, 26, 2.2); puddle(22, 17, 1.7); puddle(20, 36, 1.4); puddle(23, 9, 1.9);
+
+    // Painted hazard chevrons at the two northern gaps (readable objective cue).
+    for (let i = 0; i < 5; i++) {
+      box(this.mats.accent, cellToWorld(6) + 0.1, 0.045, cellToWorld(12) - i * 1.05, 1.6, 0.05, 0.22, 0.5);
+      box(this.mats.accent, cellToWorld(37) - 0.1, 0.045, cellToWorld(12) - i * 1.05, 1.6, 0.05, 0.22, -0.5);
+    }
+
+    // Road markings down both avenues.
+    for (let i = 0; i < 9; i++) {
+      box(this.mats.white, cellToWorld(21), 0.04, cellToWorld(3 + i * 4.5), 0.22, 0.04, 2.0);
+      box(this.mats.white, cellToWorld(3 + i * 4.5), 0.04, cellToWorld(21), 2.0, 0.04, 0.22);
+    }
+
+    // Tire stacks next to the depot (soft cover dressing).
+    for (const [cx, cz] of [[9, 34], [10, 34], [34, 9]] as [number, number][]) {
+      for (let i = 0; i < 3; i++) {
+        const t = new THREE.Mesh(this.geos.cylinder, this.mats.rubber);
+        t.position.set(cellToWorld(cx), 0.18 + i * 0.32, cellToWorld(cz));
+        t.scale.set(0.95, 0.3, 0.95);
+        t.rotation.y = i * 0.6;
+        t.castShadow = true;
+        this.group.add(t);
+        this.meshes.push(t);
+      }
+    }
+
+    // Cable runs + conduit boxes along the east wall (breaks up big surfaces).
+    for (let i = 0; i < 8; i++) {
+      box(this.mats.metalDark, cellToWorld(42) + 0.15, 1.4 + (i % 2) * 0.5, cellToWorld(6 + i * 4), 0.12, 0.12, 3.4);
+    }
+    for (const [cx, cz] of [[42, 8], [42, 24], [1, 12]] as [number, number][]) {
+      box(this.mats.paintedMetal, cellToWorld(cx), 0.55, cellToWorld(cz), 0.5, 1.1, 0.4);
+    }
+
+    // Window sills + lintel shadow bands on the exterior facades.
+    const sill = (x: number, y: number, z: number, w: number, d: number): void =>
+      void box(this.mats.concreteDark, x, y, z, w, 0.14, d);
+    sill(cellToWorld(6), 1.82, cellToWorld(4) - 0.6, 1.5, 0.28);
+    sill(cellToWorld(8), 1.82, cellToWorld(4) - 0.6, 1.5, 0.28);
+    sill(cellToWorld(35), 1.82, cellToWorld(4) - 0.6, 1.5, 0.28);
+    sill(cellToWorld(37), 1.82, cellToWorld(4) - 0.6, 1.5, 0.28);
+    sill(cellToWorld(6), 1.82, cellToWorld(37) + 0.6, 1.5, 0.28);
+    sill(cellToWorld(9), 1.82, cellToWorld(37) + 0.6, 1.5, 0.28);
   }
 
   // ---- cover + spawns ------------------------------------------------------------

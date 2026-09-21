@@ -41,6 +41,7 @@ export function MainMenu({ game, onSettings, onHelp }: { game: Game; onSettings:
           <span><b>C</b> crouch</span>
           <span><b>Q / E</b> rotate cam</span>
           <span><b>TAB</b> cycle weapon</span>
+          <span><b>RED LINE</b> danger bearing</span>
         </div>
       </div>
       <div className="menu-right">
@@ -159,8 +160,9 @@ export function HowToPlay({ onClose }: { onClose: () => void }): JSX.Element {
         </div>
         <div className="help-tips">
           <div><b>COVER</b> — Concrete blocks sight and fire. Crouch behind crates and sandbags to break line of sight.</div>
-          <div><b>ENEMIES</b> — They see, hear, remember, share intel, take cover, flank and retreat. Suppress, reposition, punish.</div>
-          <div><b>WEAPONS</b> — Rifle: balanced. SMG: close shredder. Shotgun: delete things nearby. DMR: precise power. Pistol: fast backup.</div>
+          <div><b>ENEMIES</b> — They see, hear, remember, share intel, take cover, flank and retreat — and like any marksman they miss, so listen for rounds cracking past you.</div>
+          <div><b>WEAPONS</b> — Rifle: balanced. SMG: close shredder. Shotgun: delete things nearby. DMR: precise power. Pistol: fast backup. Every gun has its own recoil, report and silhouette.</div>
+          <div><b>DANGER</b> — When hostiles close in, a red streak is drawn on the ground toward each threat, with a pulsing ring at their feet. The screen edge and chevron point at the nearest one.</div>
         </div>
         <div className="menu-buttons row">
           <Btn label="BACK" primary onClick={onClose} />

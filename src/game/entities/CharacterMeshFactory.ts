@@ -1,6 +1,12 @@
 // Procedural tactical soldier rig (~1.8m). Modular: helmet, vest, pouches,
-// backpack, arms, legs, weapon mount socket. Code-driven animation:
+// backpack, two-bone arms, legs, weapon mount socket. Code-driven animation:
 // idle / walk / run / aim / fire / reload / hit / death.
+//
+// Two-handed grip: when a weapon is mounted, a small numerical solver poses both
+// arms (shoulder yaw/pitch/roll + elbow bend) so the trigger hand sits on the
+// grip and the support hand lands on the weapon's own support point. That is why
+// every weapon exports a `grip.support` point — rifles reach out on the
+// handguard, the shotgun grabs the pump, the pistol wraps both hands.
 import * as THREE from 'three';
 import { type MaterialLib, type GeometryLib } from '../world/Materials';
 import { clamp } from '../utils/math';
@@ -14,6 +20,94 @@ export interface RigAnimState {
   crouch: boolean;
 }
 
+interface ArmPose {
+  rx: number; ry: number; rz: number; ex: number;
+}
+
+const SHOULDER_Y = 0.5; // shoulder pivot height in torso space
+const SHOULDER_X = 0.26;
+const UPPER_LEN = 0.38;
+const FORE_LEN = 0.42;
+/** Weapon mount socket in torso space (right shoulder line, chest height). */
+const MOUNT_POS = new THREE.Vector3(0.19, 0.26, 0.24);
+
+// --- two-bone arm solver ---------------------------------------------------------
+const _q = new THREE.Quaternion();
+const _q2 = new THREE.Quaternion();
+const _e = new THREE.Euler();
+const _dir = new THREE.Vector3();
+const _elbow = new THREE.Vector3();
+const _hand = new THREE.Vector3();
+const DOWN = new THREE.Vector3(0, -1, 0);
+
+/**
+ * Graded search for shoulder/elbow angles that put the hand on `target`, while
+ * preferring a natural pose (elbow low, tucked, arm not locked straight).
+ * Coarse sweep then two refinement passes — runs only when a weapon is mounted.
+ */
+function solveArm(side: -1 | 1, target: THREE.Vector3): ArmPose {
+  const sx = SHOULDER_X * side;
+  let best: ArmPose = { rx: -1.2, ry: 0, rz: 0, ex: -0.9 };
+  let bestCost = Infinity;
+
+  const evaluate = (rx: number, ry: number, rz: number, ex: number): number => {
+    _e.set(rx, ry, rz, 'XYZ');
+    _q.setFromEuler(_e);
+    _elbow.copy(DOWN).applyQuaternion(_q).multiplyScalar(UPPER_LEN).add(_dir.set(sx, SHOULDER_Y, 0));
+    _q2.setFromEuler(_e.set(ex, 0, 0, 'XYZ'));
+    _q.multiply(_q2);
+    _hand.copy(DOWN).applyQuaternion(_q).multiplyScalar(FORE_LEN).add(_elbow);
+    let cost = _hand.distanceTo(target);
+    // Elbow should hang below the shoulder, not float up beside the head.
+    const shoulderY = SHOULDER_Y;
+    if (_elbow.y > shoulderY - 0.08) cost += 0.5 * (_elbow.y - (shoulderY - 0.08));
+    // Elbow should not swing behind the torso.
+    if (_elbow.z < -0.1) cost += 0.4 * (-0.1 - _elbow.z);
+    // Elbow should not flare far outside the shoulder line.
+    const flare = Math.abs(_elbow.x) - (SHOULDER_X + 0.14);
+    if (flare > 0) cost += 0.5 * flare;
+    // Mild preference for a bend (locked-straight arms read as stiff).
+    if (ex > -0.15) cost += 0.03 * (ex + 0.15);
+    return cost;
+  };
+
+  const consider = (rx: number, ry: number, rz: number, ex: number): void => {
+    const c = evaluate(rx, ry, rz, ex);
+    if (c < bestCost) {
+      bestCost = c;
+      best = { rx, ry, rz, ex };
+    }
+  };
+
+  for (let rx = -2.6; rx <= 0.4; rx += 0.3) {
+    for (let ry = -1.5; ry <= 1.5; ry += 0.3) {
+      for (let rz = -0.9; rz <= 0.9; rz += 0.3) {
+        for (let ex = -2.4; ex <= 0; ex += 0.3) {
+          consider(rx, ry, rz, ex);
+        }
+      }
+    }
+  }
+  // Refine around the winner (two passes halve the error each time).
+  for (let pass = 0; pass < 2; pass++) {
+    const step = pass === 0 ? 0.15 : 0.06;
+    const seed = best;
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dz = -1; dz <= 1; dz++) {
+          for (let de = -1; de <= 1; de++) {
+            consider(
+              seed.rx + dx * step, seed.ry + dy * step,
+              seed.rz + dz * step, seed.ex + de * step,
+            );
+          }
+        }
+      }
+    }
+  }
+  return best;
+}
+
 export class CharacterRig {
   root = new THREE.Group();
   body = new THREE.Group();
@@ -21,10 +115,18 @@ export class CharacterRig {
   head = new THREE.Group();
   armL = new THREE.Group();
   armR = new THREE.Group();
+  /** Elbow joints (children of the shoulders). */
+  foreL = new THREE.Group();
+  foreR = new THREE.Group();
+  /** Hand markers — used for weapon grip verification and VFX sockets. */
+  handL = new THREE.Object3D();
+  handR = new THREE.Object3D();
   legL = new THREE.Group();
   legR = new THREE.Group();
   weaponMount = new THREE.Group();
 
+  private poseL: ArmPose = { rx: -1.0, ry: 0.35, rz: 0, ex: -0.9 };
+  private poseR: ArmPose = { rx: -1.15, ry: -0.25, rz: 0, ex: -0.9 };
   private walkPhase = 0;
   private fireKick = 0;
   private hitTimer = 0;
@@ -41,6 +143,7 @@ export class CharacterRig {
   ) {
     this.build(opts);
     this.root.add(this.body);
+    this.applyArmPose(0);
   }
 
   private mat(color: number, rough = 0.9): THREE.MeshStandardMaterial {
@@ -114,31 +217,63 @@ export class CharacterRig {
     this.box(this.head, helmet, 0, 0.16, 0.12, 0.26, 0.06, 0.06); // brim
     this.box(this.head, dark, 0, 0.1, 0.14, 0.2, 0.07, 0.03); // goggles
 
-    // Arms (shoulder pivots). Default pose: holding weapon forward.
-    for (const [arm, sx] of [[this.armL, -1], [this.armR, 1]] as const) {
-      arm.position.set(0.26 * sx, 0.5, 0);
+    // Arms: shoulder -> upper arm -> elbow -> forearm -> glove.
+    for (const [arm, fore, hand, sx] of [
+      [this.armL, this.foreL, this.handL, -1],
+      [this.armR, this.foreR, this.handR, 1],
+    ] as const) {
+      arm.position.set(SHOULDER_X * sx, SHOULDER_Y, 0);
       this.torso.add(arm);
-      this.box(arm, uniform, 0, -0.2, 0, 0.13, 0.42, 0.15); // upper
-      this.box(arm, skin, 0, -0.44, 0, 0.12, 0.12, 0.13); // glove
+      this.box(arm, uniform, 0, -UPPER_LEN / 2, 0, 0.135, UPPER_LEN, 0.15); // upper arm
+      this.box(arm, uniform, 0, -UPPER_LEN + 0.03, 0, 0.14, 0.12, 0.16); // elbow pad
+      fore.position.set(0, -UPPER_LEN, 0);
+      arm.add(fore);
+      this.box(fore, uniform, 0, -FORE_LEN / 2, 0, 0.12, FORE_LEN, 0.13); // forearm
+      this.box(fore, skin, 0, -FORE_LEN, 0, 0.115, 0.13, 0.125); // glove
+      hand.position.set(0, -FORE_LEN, 0);
+      fore.add(hand);
     }
-    // Aim pose: arms rotated forward.
-    this.armR.rotation.x = -1.15;
-    this.armR.rotation.y = -0.25;
-    this.armL.rotation.x = -1.0;
-    this.armL.rotation.y = 0.35;
 
     // Weapon mount socket (grip point).
-    this.weaponMount.position.set(0.16, 0.32, 0.42);
+    this.weaponMount.position.copy(MOUNT_POS);
     this.torso.add(this.weaponMount);
   }
 
-  /** Attach a weapon group; returns nothing. Weapon faces +Z. */
-  mountWeapon(weapon: THREE.Object3D): void {
+  /**
+   * Attach a weapon and pose both hands on it. `support` is the weapon-local
+   * point the support hand should hold (see WeaponMesh.buildWeaponMesh).
+   */
+  mountWeapon(weapon: THREE.Object3D, support: readonly [number, number, number] = [0, -0.02, 0.3]): void {
     this.weaponMount.add(weapon);
+    // Trigger hand: just under the weapon's grip, at the mount point.
+    const rightTarget = MOUNT_POS.clone().add(new THREE.Vector3(0, -0.03, 0.02));
+    // Support hand: the weapon's own support point, expressed in torso space.
+    const leftTarget = MOUNT_POS.clone().add(new THREE.Vector3(support[0], support[1], support[2]));
+    this.poseR = solveArm(1, rightTarget);
+    this.poseL = solveArm(-1, leftTarget);
+    this.applyArmPose(0);
   }
 
   clearWeapon(): void {
     this.weaponMount.clear();
+    // Ready stance with empty hands (weapon lowered, both elbows bent).
+    this.poseR = { rx: -1.05, ry: -0.3, rz: 0, ex: -0.85 };
+    this.poseL = { rx: -0.75, ry: 0.42, rz: 0, ex: -1.1 };
+    this.applyArmPose(0);
+  }
+
+  /** Write the solved arm pose (plus procedural offsets) onto the arm bones. */
+  private applyArmPose(reloadDip: number): void {
+    const sway = Math.sin(performance.now() / 1000 * 1.7 + this.rngPhase) * 0.012;
+    this.armR.rotation.set(this.poseR.rx + this.fireKick * 0.1, this.poseR.ry, this.poseR.rz);
+    this.foreR.rotation.x = this.poseR.ex + this.fireKick * 0.14;
+    // Reload: the support hand drops to the magazine well and comes back up.
+    this.armL.rotation.set(
+      this.poseL.rx + reloadDip * 0.55 + sway,
+      this.poseL.ry - reloadDip * 0.35,
+      this.poseL.rz,
+    );
+    this.foreL.rotation.x = this.poseL.ex + reloadDip * 1.15 + sway;
   }
 
   playFire(): void {
@@ -159,6 +294,7 @@ export class CharacterRig {
     this.body.rotation.set(0, 0, 0);
     this.body.position.set(0, 0, 0);
     this.applyFlash(0);
+    this.applyArmPose(0);
   }
 
   update(dt: number, s: RigAnimState): void {
@@ -198,14 +334,15 @@ export class CharacterRig {
     this.torso.rotation.x += (leanTarget - this.torso.rotation.x) * Math.min(1, dt * 8);
     this.torso.position.y = 1.06 - (s.aiming ? 0.05 : 0);
 
-    // Reload dip: arms lower briefly.
+    // Arms: solved base pose + reload dip + fire kick.
     const dipTarget = s.reloading ? 1 : 0;
     this.reloadDip += (dipTarget - this.reloadDip) * Math.min(1, dt * 6);
-    this.armR.rotation.x = -1.15 + this.reloadDip * 0.7 + this.fireKick * 0.12;
-    this.armL.rotation.x = -1.0 + this.reloadDip * 0.55 + Math.sin(t * 1.7) * 0.02;
-    // Fire kick on weapon mount.
-    this.weaponMount.position.z = 0.42 - this.fireKick * 0.07;
-    this.weaponMount.rotation.x = this.fireKick * 0.09;
+    this.applyArmPose(this.reloadDip);
+
+    // Fire kick on weapon mount (mostly recoil travel, minimal rotation so the
+    // support hand stays on the weapon).
+    this.weaponMount.position.z = MOUNT_POS.z - this.fireKick * 0.06;
+    this.weaponMount.rotation.x = this.fireKick * 0.035;
 
     // Hit flash.
     this.applyFlash(this.hitTimer);
