@@ -116,13 +116,13 @@ public:
 
 	// --- HUD data ------------------------------------------------------------
 	UFUNCTION(BlueprintPure, Category = "Breachline|HUD")
-	const FHudSnapshot& GetSnapshot() const { return Snapshot; }
+	FHudSnapshot GetSnapshot() const { return Snapshot; }
 
 	/** Rebuilt every frame; the HUD reads it in DrawHUD(). */
 	void BuildSnapshot();
 
 	UFUNCTION(BlueprintPure, Category = "Breachline|HUD")
-	const FBreachlineHitMarker& GetHitMarker() const { return HitMarker; }
+	FBreachlineHitMarker GetHitMarker() const { return HitMarker; }
 
 	UFUNCTION(BlueprintPure, Category = "Breachline|HUD")
 	float GetThreatPulse() const;
@@ -131,7 +131,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Breachline|HUD")
 	bool IsDangerActive() const { return Snapshot.ThreatLevel > Threats::AwareThreshold; }
 
-	UFUNCTION(BlueprintPure, Category = "Breachline|HUD")
+	/** BlueprintCallable, not BlueprintPure: it only produces output parameters. */
+	UFUNCTION(BlueprintCallable, Category = "Breachline|HUD")
 	void GetReticlePoints(TArray<FVector2D>& OutPoints) const;
 
 	/** Last damage taken, as (world direction, seconds ago) for the indicator. */

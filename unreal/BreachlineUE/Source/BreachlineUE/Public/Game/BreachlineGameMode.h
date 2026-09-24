@@ -66,7 +66,7 @@ public:
 
 	/** Active medkit world positions (XY), for the radar. */
 	UFUNCTION(BlueprintPure, Category = "Breachline|Game")
-	const TArray<FVector2D>& GetPickupLocations() const { return PickupLocations; }
+	TArray<FVector2D> GetPickupLocations() const { return PickupLocations; }
 
 	UFUNCTION(BlueprintPure, Category = "Breachline|Game")
 	ASpawnDirector* GetSpawnDirector() const { return Director; }

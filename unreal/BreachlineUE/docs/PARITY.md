@@ -85,10 +85,12 @@ Elevation 40° (lowered from 55° in the web build, twice), azimuth 45°, distan
 | Radar contact visibility | enemies appear when the danger line activates | aware contacts appear bright red; unaware contacts only within 12 m and faint | a 158 px scope has room for a little more information than a canvas strip did |
 | Round transition | restore ammo | restore ammo **and** full health + armour + grenades | an explicit user requirement for this build |
 | Medkits | health kit pickup | same 30 % of max health, bob/spin/glow, radar cross, 2 max, 11–18 s cadence | unchanged in effect, richer in presentation |
+| Kill award | the enemy is removed from the enemy array on the frame it dies, so it is scored once by construction | scored through `UHealthComponent::TryClaimKillAward()`, claimed inside the combat library | there is no array to remove an actor from, so the exactly-once guarantee is enforced explicitly (eight shotgun pellets can land on the same corpse in one frame) |
+| Arena geometry | the renderer draws the layout from world-unit constants | both generators scale grid cells by `World::CellMeters`: a "1 cell" wall piece is 4 m, not 1 m | one unit rule shared by `ACompoundBuilder` and `breachline_level.py`, so the authored and runtime arenas are the same arena |
 
 ## Behavioural test coverage
 
-The web build's vitest suite (95 tests) and this port's 13 automation tests are not
+The web build's vitest suite (95 tests) and this port's 17 automation tests are not
 one-to-one: the UE suite targets every *pure* system plus the balance contract.
 Anything that requires a live world (traversal, animation, FX) is verified by
 playing the five-round loop, because a NullRHI automation run cannot meaningfully

@@ -79,13 +79,13 @@ public:
 	int32 GetTotalRounds() const { return Rounds.Num(); }
 
 	UFUNCTION(BlueprintPure, Category = "Breachline|Progression")
-	const FRoundDef& GetRoundDef() const;
+	FRoundDef GetRoundDef() const;
 
 	UFUNCTION(BlueprintPure, Category = "Breachline|Progression")
 	float GetAccuracy() const { return ShotsFired > 0 ? float(ShotsHit) / float(ShotsFired) : 0.f; }
 
 	UFUNCTION(BlueprintPure, Category = "Breachline|Progression")
-	const TArray<FRoundDef>& GetRounds() const { return Rounds; }
+	TArray<FRoundDef> GetRounds() const { return Rounds; }
 
 	UPROPERTY(BlueprintReadOnly, Category = "Breachline|Progression") int32 RoundIndex = 0;
 	UPROPERTY(BlueprintReadOnly, Category = "Breachline|Progression") int32 Score = 0;

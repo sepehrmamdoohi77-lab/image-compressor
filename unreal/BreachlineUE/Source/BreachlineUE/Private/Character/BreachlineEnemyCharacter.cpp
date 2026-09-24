@@ -77,7 +77,7 @@ void ABreachlineEnemyCharacter::Configure(
 	ApplyArchetypeVisuals();
 }
 
-const FBreachlineWeaponDef& ABreachlineEnemyCharacter::GetWeaponDef() const
+FBreachlineWeaponDef ABreachlineEnemyCharacter::GetWeaponDef() const
 {
 	static const FBreachlineWeaponDef Fallback;
 	return Weapon ? Weapon->GetDefinition() : Fallback;

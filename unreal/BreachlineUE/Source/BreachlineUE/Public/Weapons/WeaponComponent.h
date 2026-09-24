@@ -36,7 +36,7 @@ public:
 	void SetDefinition(const FBreachlineWeaponDef& InDef);
 
 	UFUNCTION(BlueprintPure, Category = "Breachline|Weapon")
-	const FBreachlineWeaponDef& GetDefinition() const { return Def; }
+	FBreachlineWeaponDef GetDefinition() const { return Def; }
 
 	// --- trigger -------------------------------------------------------------
 	/** True when the weapon was ready and a round left the barrel. */

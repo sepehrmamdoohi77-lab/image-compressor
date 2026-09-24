@@ -76,7 +76,7 @@ with different reviewers.
 | `UI/BreachlineHUD.*` | The entire interface, drawn with canvas primitives. |
 | `VFX/BreachlineFXPool.*`, `VFX/BreachlineFXSubsystem.*` | Pooled tracers/impacts/bursts/muzzle lights with a Niagara-first path and a zero-asset fallback. |
 | `Audio/BreachlineSfxSynth.*`, `Audio/BreachlineAudioSubsystem.*` | 48-voice procedural synthesiser (noise/sine/triangle/square/saw, per-voice biquad, ADSR, delay-by-negative-position) plus distance/pan/mix management. |
-| `Tests/BreachlineTests.cpp` | 13 automation tests over every pure system. |
+| `Tests/BreachlineTests.cpp` | 17 automation tests over every pure system. |
 
 ## Data flow of one shot (player)
 
@@ -89,10 +89,11 @@ ABreachlinePlayerCharacter::FireOnce
            TraceBullet (Weapon trace channel: soft cover ignored)
            ClassifyHitZone (bone name, else height + lateral offset)
            Breachline::ComputeDamage (zone, falloff, armour)
-           UHealthComponent::ApplyBullet    -> health/armour, death, scoring
+           UHealthComponent::ApplyBullet    -> health/armour, death
+           AwardKill (claim latch)          -> score, headshot/grenade bonus, kill banner
            UBreachlineFXSubsystem (tracer, impact, muzzle flash)
            UBreachlineAudioSubsystem (shot, impact, near-miss whiz)
-           ABreachlinePlayerController::NotifyHitConfirmed / NotifyWeaponFired
+           ABreachlinePlayerController::NotifyShotResolved / NotifyWeaponFired
 ```
 
 Hostile fire takes the same route through `ResolveEnemyShot`, which builds the
@@ -122,3 +123,16 @@ whiz. One code path for damage, two models for aim: that is the whole design.
 * **Everything optional** — no `nullptr` dereference is possible from a missing
   asset: every authored reference is soft, resolved through
   `UBreachlineSettings::Get()`, with a compiled-in fallback.
+* **A kill is claimed, never tested** — "is the victim dead?" stays true forever,
+  and a shotgun can land eight pellets on the same frame, so
+  `UHealthComponent::TryClaimKillAward()` is the last line of defence: exactly one
+  caller gets `true`, and that caller is the one inside the combat library that
+  knows the instigator, the zone and whether the damage was explosive. Score,
+  headshot bonus, grenade bonus and the HUD banner therefore cannot double-fire or
+  disagree with each other.
+* **Input prefers authored assets without excluding the runtime path** — the pawn
+  resolves each action by name against the mapping context first (so a designer's
+  `IA_Move` asset is what gets bound) and only synthesises an action when the
+  context does not provide one. `ApplyKeyMapping()` adds a key only if the context
+  does not already map it, which makes the whole thing idempotent and means the
+  authored IMC and the zero-asset boot share one code path.

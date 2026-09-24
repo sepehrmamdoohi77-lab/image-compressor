@@ -43,10 +43,10 @@ public:
 	UWeaponComponent* GetWeapon() const { return Weapon; }
 
 	UFUNCTION(BlueprintPure, Category = "Breachline|Enemy")
-	const FBreachlineWeaponDef& GetWeaponDef() const;
+	FBreachlineWeaponDef GetWeaponDef() const;
 
 	UFUNCTION(BlueprintPure, Category = "Breachline|Enemy")
-	const FEnemyArchetypeDef& GetArchetype() const { return Archetype; }
+	FEnemyArchetypeDef GetArchetype() const { return Archetype; }
 
 	UFUNCTION(BlueprintPure, Category = "Breachline|Enemy")
 	FName GetArchetypeId() const { return Archetype.Id; }

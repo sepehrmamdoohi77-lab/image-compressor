@@ -50,7 +50,7 @@ int32 UProgressionSubsystem::RoundClearBonusFor(const FBreachlineScoring& S, int
 	return S.RoundClearBonus[FMath::Min(Idx + 1, S.RoundClearBonus.Num() - 1)];
 }
 
-const FRoundDef& UProgressionSubsystem::GetRoundDef() const
+FRoundDef UProgressionSubsystem::GetRoundDef() const
 {
 	static const FRoundDef Fallback;
 	return Rounds.IsValidIndex(RoundIndex) ? Rounds[RoundIndex] : Fallback;

@@ -9,7 +9,7 @@
 
 class UWeaponComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FBreachlineWeaponSwitched, EWeaponSlotId, Slot, const FBreachlineWeaponDef&, Def);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FBreachlineWeaponSwitched, EWeaponSlotId, Slot, FBreachlineWeaponDef, Def);
 
 /**
  * The squad loadout: five weapon components, one active at a time. Switching
@@ -53,7 +53,7 @@ public:
 	EWeaponSlotId GetActiveSlot() const { return ActiveSlot; }
 
 	UFUNCTION(BlueprintPure, Category = "Breachline|Loadout")
-	const TArray<FBreachlineWeaponDef>& GetDefinitions() const { return Definitions; }
+	TArray<FBreachlineWeaponDef> GetDefinitions() const { return Definitions; }
 
 	UPROPERTY(BlueprintAssignable, Category = "Breachline|Loadout")
 	FBreachlineWeaponSwitched OnWeaponSwitched;
