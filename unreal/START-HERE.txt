@@ -15,6 +15,9 @@ Optional, once, if you want authored assets and a real map:
    Editor > Tools > Execute Python Script... > BreachlineUE/Content/Python/breachline_assets.py
    Editor > Tools > Execute Python Script... > BreachlineUE/Content/Python/breachline_level.py
 
+If a build fails and you need the real errors as text:  run  build.bat  and send
+the generated build-log.txt (or copy Visual Studio's Error List with Ctrl+A/Ctrl+C).
+
 Before a rebuild fails:  python3 tools/check_uht.py BreachlineUE/Source/BreachlineUE
    (static checks for the UnrealHeaderTool error classes; no engine needed)
 

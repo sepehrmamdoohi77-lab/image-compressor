@@ -14,7 +14,7 @@ stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 
 mkdir -p "$stage/BreachlineUE-UE5.8"
-cp -r "$here/README.md" "$here/START-HERE.txt" "$here/BreachlineUE" "$here/tools" "$stage/BreachlineUE-UE5.8/"
+cp -r "$here/README.md" "$here/START-HERE.txt" "$here/build.bat" "$here/BreachlineUE" "$here/tools" "$stage/BreachlineUE-UE5.8/"
 
 # Editor/build leftovers never belong in the archive.
 find "$stage" -name '.DS_Store' -delete

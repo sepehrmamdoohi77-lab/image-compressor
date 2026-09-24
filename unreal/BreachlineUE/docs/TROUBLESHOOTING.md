@@ -108,6 +108,22 @@ one wastes the most time:
 | `Engine/Programs/UnrealBuildTool/Log.txt` | `error : ...`, `error C2065:` | the compiler. This is the only place build errors exist. |
 | `BreachlineUE/Saved/Crashes/…` | a `CrashContext.runtime-xml` + callstack | a crash. The callstack names the exact function. |
 
+### Get the build errors as text in one step
+
+Visual Studio's **Error List** is copyable: click in it, `Ctrl+A`, `Ctrl+C`, then
+paste anywhere. That is enough to fix a build.
+
+From a terminal, `build.bat` in the archive root does the same thing and writes
+everything to `build-log.txt`:
+
+```bat
+build.bat                       :: engine in the default location
+build.bat "D:\Epic\UE_5.8"     :: engine somewhere else
+```
+
+It prints the exit code, appends an `errors` section with every line matching
+`error`, and leaves `build-log.txt` next to itself to send along.
+
 ### Boot markers
 
 `ABreachlineGameMode` and the view controller print a five-stage trail, so the log

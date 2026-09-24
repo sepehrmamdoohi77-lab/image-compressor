@@ -334,7 +334,7 @@ void ACompoundBuilder::SpawnLighting()
 
 	if (ASkyLight* Sky = World->SpawnActor<ASkyLight>(ASkyLight::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, Params))
 	{
-		if (USkyLightComponent* Component = Sky->GetLightComponent())
+		if (USkyLightComponent* Component = Cast<USkyLightComponent>(Sky->GetLightComponent()))
 		{
 			Component->SetIntensity(1.1f);
 			Component->SetLightColor(FLinearColor(0.45f, 0.58f, 0.85f));
@@ -388,7 +388,9 @@ void ACompoundBuilder::SpawnLighting()
 		const FVector Location = CellToWorld(Cell.X, Cell.Y, 4.2f);
 		if (APointLight* Lamp = World->SpawnActor<APointLight>(APointLight::StaticClass(), Location, FRotator::ZeroRotator, Params))
 		{
-			if (UPointLightComponent* Component = Lamp->GetPointLightComponent())
+			// ALight::GetLightComponent() is the accessor every light actor has;
+			// the cast keeps this working whichever subclass returns it.
+			if (UPointLightComponent* Component = Cast<UPointLightComponent>(Lamp->GetLightComponent()))
 			{
 				Component->SetIntensity(6000.f);
 				Component->SetAttenuationRadius(MetersToUU(16.f));
