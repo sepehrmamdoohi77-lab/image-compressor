@@ -33,9 +33,13 @@ void ABreachlineGameMode::InitGame(const FString& MapName, const FString& Option
 {
 	Super::InitGame(MapName, Options, ErrorMessage);
 
+	UE_LOG(LogBreachline, Display, TEXT("[boot 1/5] InitGame (%s)"), *MapName);
+
 	// Before any player exists: generate the arena if the level is empty, so the
 	// default pawn spawns on the generated PlayerStart instead of at the origin.
 	EnsureCompound();
+
+	UE_LOG(LogBreachline, Display, TEXT("[boot 2/5] arena ready"));
 }
 
 void ABreachlineGameMode::EnsureCompound()
@@ -83,6 +87,8 @@ void ABreachlineGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UE_LOG(LogBreachline, Display, TEXT("[boot 3/5] game mode BeginPlay"));
+
 	RebuildNavigation();
 
 	// The wave director is simulation state owned by the mode: spawned here so it
@@ -90,6 +96,11 @@ void ABreachlineGameMode::BeginPlay()
 	FActorSpawnParameters Params;
 	Params.ObjectFlags |= RF_Transient;
 	Director = GetWorld()->SpawnActor<ASpawnDirector>(ASpawnDirector::StaticClass(), FTransform::Identity, Params);
+
+	if (!Director)
+	{
+		UE_LOG(LogBreachline, Error, TEXT("Spawn director could not be spawned: no hostiles will appear."));
+	}
 
 	Player = Cast<ABreachlinePlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 	if (Player && Player->GetHealthComponent())
@@ -103,6 +114,13 @@ void ABreachlineGameMode::BeginPlay()
 		Progression->StartRun();
 		StartRound(0);
 	}
+	else
+	{
+		UE_LOG(LogBreachline, Error, TEXT("No progression subsystem: the round loop will not run."));
+	}
+
+	UE_LOG(LogBreachline, Display, TEXT("[boot 5/5] round loop running (operator: %s)"),
+		Player ? *Player->GetName() : TEXT("NONE — the pawn was not spawned yet"));
 
 	NextPickupTime = GetWorld()->GetTimeSeconds() + FMath::FRandRange(Pickups::SpawnEveryMin, Pickups::SpawnEveryMax);
 }

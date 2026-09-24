@@ -96,6 +96,46 @@ these, it is the same class of problem and the same fix applies:
 | `UWorld` members called where only a pointer type is known | `#include "Engine/World.h"` in the files that call them |
 | A type declared by an engine header that a translation unit does not include | explicit engine includes in the .cpp that uses them |
 
+## Reading the right log
+
+There are three different places an Unreal problem shows up, and picking the wrong
+one wastes the most time:
+
+| Source | Looks like | What it is |
+| --- | --- | --- |
+| Visual Studio **Output** window during Debug | `'UnrealEditor.exe' (Win32): Loaded '...UnrealEditor.exe'. Symbols loaded.` then hundreds of `Loaded '...dll'` lines | the **debugger's module list**. It is not an error and not a build result. The useful part is the *last* few lines, after the loading stops. |
+| `BreachlineUE/Saved/Logs/BreachlineUE.log` | timestamped `LogBreachline:` lines | the game's own log. This is where `[boot n/5]` markers appear. |
+| `Engine/Programs/UnrealBuildTool/Log.txt` | `error : ...`, `error C2065:` | the compiler. This is the only place build errors exist. |
+| `BreachlineUE/Saved/Crashes/…` | a `CrashContext.runtime-xml` + callstack | a crash. The callstack names the exact function. |
+
+### Boot markers
+
+`ABreachlineGameMode` and the view controller print a five-stage trail, so the log
+tells you where startup stopped:
+
+```
+[boot 1/5] InitGame (L_Breachline)
+[boot 2/5] arena ready
+[boot 3/5] game mode BeginPlay
+[boot 4/5] view ready (camera rig: spawned)
+[boot 5/5] round loop running (operator: BreachlinePlayerCharacter_0)
+```
+
+Missing `boot 5/5` means the round loop did not start (the log says why: no
+progression subsystem, no spawn director). `operator: NONE` means the game mode's
+BeginPlay ran before the pawn existed — harmless in the standalone game, worth a
+second look in PIE.
+
+To run with a log on disk from the command line (best for a first look):
+
+```bat
+"C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe" ^
+   "C:\path\to\BreachlineUE\BreachlineUE.uproject" -log -windowed -resx=1280 -resy=720
+```
+
+`-log` opens a console with the live log; `Saved/Logs/BreachlineUE.log` gets the
+same content either way.
+
 ## It compiles but the level is empty
 
 Expected. `GameDefaultMap` points at `/Game/Breachline/Maps/L_Breachline`, which is

@@ -52,6 +52,9 @@ void ABreachlinePlayerController::BeginPlay()
 	SpawnRig();
 	ApplyProfile();
 	SetInputMode(FInputModeGameAndUI().SetHideCursorDuringCapture(false));
+
+	UE_LOG(LogBreachline, Display, TEXT("[boot 4/5] view ready (camera rig: %s)"),
+		Rig ? TEXT("spawned") : TEXT("MISSING"));
 }
 
 void ABreachlinePlayerController::ApplyProfile()

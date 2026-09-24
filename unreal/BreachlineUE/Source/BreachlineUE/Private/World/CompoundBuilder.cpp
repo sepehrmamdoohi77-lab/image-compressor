@@ -424,6 +424,14 @@ void ACompoundBuilder::SpawnNavigation()
 			// InitGame (before the pawn exists), and navmesh generation must not
 			// run against a world that is still initialising actors.
 			Nav->OnNavigationBoundsUpdated(Volume);
+			UE_LOG(LogBreachline, Log, TEXT("Navmesh bounds registered (%.0f m half-extent)."), Extent);
+		}
+		else
+		{
+			// Not fatal: the AI falls back to direct movement, but it is worth a
+			// line in the log because pathing quality drops noticeably.
+			UE_LOG(LogBreachline, Warning,
+				TEXT("Navigation system not available: AI will move without pathfinding."));
 		}
 	}
 }

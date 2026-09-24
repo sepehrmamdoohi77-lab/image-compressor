@@ -20,6 +20,9 @@ Before a rebuild fails:  python3 tools/check_uht.py BreachlineUE/Source/Breachli
 
 Tests:  Editor > Tools > Session Frontend > Automation  ->  filter "Breachline" (17 tests)
 
+If the editor opens but the game does not start: the log's [boot n/5] markers show
+the stage that did not finish (Saved/Logs/BreachlineUE.log).
+
 If the editor says "BreachlineUE could not be compiled": open
 BreachlineUE/docs/TROUBLESHOOTING.md — it explains how to see the real error and
 what the usual causes are (most often: no Visual Studio C++ workload installed).
