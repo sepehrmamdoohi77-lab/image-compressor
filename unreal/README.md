@@ -28,6 +28,7 @@ FSM instead of a browser game loop.
 | Content generator | `BreachlineUE/Content/Python/breachline_level.py`, `breachline_assets.py` | builds the map, DataTables and weapon assets |
 | Designer data | `BreachlineUE/Content/Data/weapons.json`, `enemies.json` | source of truth for the generated assets |
 | Docs | `BreachlineUE/docs/RENDERING.md`, `ARCHITECTURE.md`, `PARITY.md` | how the graphics work, how the code is laid out, and how it maps to the web build |
+| One-file download | `BreachlineUE-UE5.8.zip` (built by `package.sh`) | the whole port in a single archive: README, START-HERE, project — extract, open the `.uproject`, press Play |
 
 **It runs with zero assets.** Blockout geometry comes from `/Engine/BasicShapes`,
 tracers/impacts/explosions from a pooled `UInstancedStaticMeshComponent` system,

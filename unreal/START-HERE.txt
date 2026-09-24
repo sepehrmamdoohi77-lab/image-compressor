@@ -1,0 +1,23 @@
+BREACHLINE UE — Unreal Engine 5.8 project
+=========================================
+
+1. Install Unreal Engine 5.8 (Epic Games Launcher).
+2. Open  BreachlineUE/BreachlineUE.uproject
+   -> "Missing modules / rebuild?"  ->  Yes  (compiles in a minute or two).
+3. Press Play.
+
+That is the whole setup: the game mode builds the arena, the navmesh bound, the
+lighting and the player start at runtime, so an empty level is enough. A GPU with
+hardware ray tracing is required for the full look (Lumen HW RT + MegaLights);
+without one set Quality = Medium/Low in the game profile.
+
+Optional, once, if you want authored assets and a real map:
+   Editor > Tools > Execute Python Script... > BreachlineUE/Content/Python/breachline_assets.py
+   Editor > Tools > Execute Python Script... > BreachlineUE/Content/Python/breachline_level.py
+
+Tests:  Editor > Tools > Session Frontend > Automation  ->  filter "Breachline" (17 tests)
+
+Docs:   BreachlineUE/docs/RENDERING.md      (every renderer setting and why)
+        BreachlineUE/docs/ARCHITECTURE.md   (module layout, data flow, design rules)
+        BreachlineUE/docs/PARITY.md         (web build <-> UE numbers, side by side)
+        README.md                           (the full write-up: controls, AI, loop, packaging)
