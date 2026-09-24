@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Core/BreachlineTypes.h"
+// ApplyBullet takes an FDamageInput by reference and is a UFUNCTION, so the
+// generated code needs that struct's definition, not just its name.
+#include "Combat/DamageModel.h"
 #include "HealthComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FBreachlineHealthChanged, float, NewHealth, float, Delta, AActor*, Instigator);

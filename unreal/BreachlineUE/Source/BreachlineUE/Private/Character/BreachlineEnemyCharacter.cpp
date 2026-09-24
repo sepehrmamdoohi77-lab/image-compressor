@@ -7,10 +7,13 @@
 #include "Core/BreachlineSettings.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Materials/MaterialInterface.h"
 #include "Components/StaticMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/World.h"
 #include "BreachlineUE.h"
 
 using namespace Breachline;

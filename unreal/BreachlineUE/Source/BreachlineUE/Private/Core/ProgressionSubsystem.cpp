@@ -1,6 +1,7 @@
 // Copyright (c) Breachline UE. All rights reserved.
 
 #include "Core/ProgressionSubsystem.h"
+#include "Engine/World.h"
 #include "Core/BreachlineBalance.h"
 #include "Core/BreachlineSettings.h"
 #include "Engine/DataTable.h"

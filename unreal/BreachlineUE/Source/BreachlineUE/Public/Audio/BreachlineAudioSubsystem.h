@@ -7,8 +7,10 @@
 #include "Core/BreachlineTypes.h"
 #include "BreachlineAudioSubsystem.generated.h"
 
+class AActor;
 class UBreachlineSfxSynth;
 class UBreachlineGameInstance;
+class UBreachlineSaveGame;
 
 /**
  * Mixes the game. Owns:

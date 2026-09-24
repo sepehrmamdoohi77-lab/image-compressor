@@ -2,6 +2,7 @@
 
 #include "Character/HealthComponent.h"
 #include "Combat/DamageModel.h"
+#include "Engine/World.h"
 #include "BreachlineUE.h"
 
 UHealthComponent::UHealthComponent()

@@ -10,7 +10,13 @@
 #include "CoreMinimal.h"
 #include "BreachlineTypes.generated.h"
 
+// Engine classes referenced only through pointers / soft pointers in the USTRUCTs
+// below. They have to be named here: this header pulls in nothing but CoreMinimal,
+// and an undeclared name inside a TSoftObjectPtr member is a compile error.
+class AActor;
 class ACharacter;
+class UStaticMesh;
+class UNiagaraSystem;
 
 /** 1 Unreal unit = 1 cm. All gameplay numbers below are authored in metres. */
 #define BREACHLINE_CM_PER_M 100.f

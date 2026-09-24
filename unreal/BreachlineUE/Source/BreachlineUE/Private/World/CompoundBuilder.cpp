@@ -4,6 +4,7 @@
 #include "World/CoverPoint.h"
 #include "Core/BreachlineBalance.h"
 #include "Components/InstancedStaticMeshComponent.h"
+#include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"

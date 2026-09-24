@@ -82,7 +82,11 @@ protected:
 
 	void SpawnPickup();
 	void RefreshPickupLocations();
+	/** Bound to the player's health component and the progression subsystem. */
+	UFUNCTION()
 	void HandlePlayerDied(AActor* Victim, AActor* Killer);
+
+	UFUNCTION()
 	void HandleRoundChanged(int32 RoundIndex, FRoundDef RoundDef);
 
 	UPROPERTY() TObjectPtr<ASpawnDirector> Director = nullptr;

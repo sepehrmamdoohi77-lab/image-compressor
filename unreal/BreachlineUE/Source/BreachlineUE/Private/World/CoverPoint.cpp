@@ -2,6 +2,8 @@
 
 #include "World/CoverPoint.h"
 #include "Components/BillboardComponent.h"
+#include "Components/SceneComponent.h"
+#include "Engine/Texture2D.h"
 #include "UObject/ConstructorHelpers.h"
 
 ACoverPoint::ACoverPoint()

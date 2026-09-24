@@ -19,6 +19,8 @@
 #include "Core/BreachlineTypes.h"
 #include "BreachlineFXPool.generated.h"
 
+class USceneComponent;
+
 class UInstancedStaticMeshComponent;
 class UPointLightComponent;
 

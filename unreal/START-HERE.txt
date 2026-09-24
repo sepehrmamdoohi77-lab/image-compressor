@@ -17,7 +17,12 @@ Optional, once, if you want authored assets and a real map:
 
 Tests:  Editor > Tools > Session Frontend > Automation  ->  filter "Breachline" (17 tests)
 
+If the editor says "BreachlineUE could not be compiled": open
+BreachlineUE/docs/TROUBLESHOOTING.md — it explains how to see the real error and
+what the usual causes are (most often: no Visual Studio C++ workload installed).
+
 Docs:   BreachlineUE/docs/RENDERING.md      (every renderer setting and why)
+        BreachlineUE/docs/TROUBLESHOOTING.md (first-build failures and fixes)
         BreachlineUE/docs/ARCHITECTURE.md   (module layout, data flow, design rules)
         BreachlineUE/docs/PARITY.md         (web build <-> UE numbers, side by side)
         README.md                           (the full write-up: controls, AI, loop, packaging)

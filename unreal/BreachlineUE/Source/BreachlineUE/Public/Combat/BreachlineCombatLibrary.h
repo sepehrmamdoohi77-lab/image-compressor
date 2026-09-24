@@ -4,10 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Engine/HitResult.h"
 #include "Core/BreachlineTypes.h"
 #include "Combat/EnemyFireModel.h"
 #include "BreachlineCombatLibrary.generated.h"
 
+class AActor;
+class UWorld;
 class UHealthComponent;
 
 /** Everything needed to resolve one trigger pull. */
