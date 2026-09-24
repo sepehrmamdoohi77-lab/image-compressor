@@ -97,17 +97,17 @@ void ABreachlinePlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	Player = Cast<ABreachlinePlayerCharacter>(InPawn);
-	if (Player && Rig)
+	OperatorPawn = Cast<ABreachlinePlayerCharacter>(InPawn);
+	if (OperatorPawn && Rig)
 	{
-		Rig->SetTargetLocation(Player->GetActorLocation(), /*bSnap*/ true);
+		Rig->SetTargetLocation(OperatorPawn->GetActorLocation(), /*bSnap*/ true);
 	}
 
 	// Damage feedback lives on the controller: the pawn does not know about the
 	// HUD, the camera or the score.
-	if (Player && Player->GetHealthComponent())
+	if (OperatorPawn && OperatorPawn->GetHealthComponent())
 	{
-		Player->GetHealthComponent()->OnHealthChanged.AddDynamic(
+		OperatorPawn->GetHealthComponent()->OnHealthChanged.AddDynamic(
 			this, &ABreachlinePlayerController::HandlePlayerHealthChanged);
 	}
 }
@@ -118,19 +118,19 @@ void ABreachlinePlayerController::Tick(float DeltaSeconds)
 
 	// Camera follows the operator, then the HUD snapshot is rebuilt from live
 	// state: there is exactly one place that assembles HUD data.
-	if (Player && Rig)
+	if (OperatorPawn && Rig)
 	{
-		Rig->SetTargetLocation(Player->GetActorLocation());
+		Rig->SetTargetLocation(OperatorPawn->GetActorLocation());
 
 		// Cursor aim: the pawn aims at the ground point under the mouse.
 		FVector Ground;
 		if (GetCursorGroundPoint(Ground))
 		{
 			CursorGroundPoint = Ground;
-			const FVector AimDir = (CursorGroundPoint - Player->GetMuzzleLocation()).GetSafeNormal2D();
+			const FVector AimDir = (CursorGroundPoint - OperatorPawn->GetMuzzleLocation()).GetSafeNormal2D();
 			if (!AimDir.IsNearlyZero())
 			{
-				Player->SetAimDirection(AimDir);
+				OperatorPawn->SetAimDirection(AimDir);
 			}
 		}
 	}
@@ -147,7 +147,7 @@ void ABreachlinePlayerController::Tick(float DeltaSeconds)
 	ScoreFade = FMath::Max(0.f, ScoreFade - DeltaSeconds);
 
 	// Firing is held down: continuous fire blooms the reticle, mirrored on screen.
-	if (UWeaponComponent* Weapon = Player && Player->GetLoadout() ? Player->GetLoadout()->GetActiveWeapon() : nullptr)
+	if (UWeaponComponent* Weapon = OperatorPawn && OperatorPawn->GetLoadout() ? OperatorPawn->GetLoadout()->GetActiveWeapon() : nullptr)
 	{
 		NotifySpread(Weapon->GetSpreadRadians());
 	}
@@ -174,8 +174,8 @@ bool ABreachlinePlayerController::GetCursorGroundPoint(FVector& OutPoint) const
 	if (!GetMousePosition(MouseX, MouseY))
 	{
 		// No cursor (gamepad): aim straight ahead of the pawn instead.
-		if (!Player) return false;
-		OutPoint = Player->GetActorLocation() + Player->GetActorForwardVector() * MetersToUU(12.f);
+		if (!OperatorPawn) return false;
+		OutPoint = OperatorPawn->GetActorLocation() + OperatorPawn->GetActorForwardVector() * MetersToUU(12.f);
 		return true;
 	}
 	return Rig->ScreenToGround(FVector2D(MouseX, MouseY), OutPoint);
@@ -203,9 +203,11 @@ void ABreachlinePlayerController::NotifyWeaponFired(const FBreachlineWeaponDef& 
 
 	// Kick along the shot direction, scaled by calibre: the DMR shoves, the SMG
 	// barely moves. Trauma is tiny — this is feel, not a mechanic.
-	const float Calibre = FMath::GetMappedRangeValueClamped(
-		FVector2D(10.f, 70.f), FVector2D(0.5f, 1.6f), Weapon.Damage);
-	const FVector Direction = Player ? Player->GetAimDirection() : FVector::ForwardVector;
+	// Remapped by hand: FMath's helper switched to FVector2f in UE5, and this is one
+	// line of arithmetic either way.
+	const float CalibreAlpha = FMath::Clamp((Weapon.Damage - 10.f) / (70.f - 10.f), 0.f, 1.f);
+	const float Calibre = FMath::Lerp(0.5f, 1.6f, CalibreAlpha);
+	const FVector Direction = OperatorPawn ? OperatorPawn->GetAimDirection() : FVector::ForwardVector;
 	Rig->Kick(-Direction, Camera::FireKickM * Calibre);
 	Rig->AddTrauma(Hud::FireTrauma * Calibre);
 }
@@ -223,13 +225,13 @@ void ABreachlinePlayerController::NotifyHitConfirmed(AActor* Victim, bool bHeads
 	HitMarker.Time = GetWorld()->GetTimeSeconds();
 }
 
-void ABreachlinePlayerController::HandlePlayerHealthChanged(float NewHealth, float Delta, AActor* Instigator)
+void ABreachlinePlayerController::HandlePlayerHealthChanged(float NewHealth, float Delta, AActor* Causer)
 {
 	// Resupply broadcasts a positive delta; only damage is interesting here.
 	if (Delta >= 0.f) return;
 
 	const float Amount = -Delta;
-	NotifyPlayerDamaged(Amount, Instigator);
+	NotifyPlayerDamaged(Amount, Causer);
 
 	// Feeding the progression system here (rather than in the damage pipeline) keeps
 	// the "flawless round" bonus honest: any damage at all voids it, whoever dealt it.
@@ -262,7 +264,7 @@ void ABreachlinePlayerController::NotifyPlayerDamaged(float Amount, AActor* Caus
 {
 	LastDamageTime = GetWorld()->GetTimeSeconds();
 	LastDamageDirection = Causer
-		? (Causer->GetActorLocation() - (Player ? Player->GetActorLocation() : FVector::ZeroVector)).GetSafeNormal2D()
+		? (Causer->GetActorLocation() - (OperatorPawn ? OperatorPawn->GetActorLocation() : FVector::ZeroVector)).GetSafeNormal2D()
 		: FVector::ForwardVector;
 
 	if (Rig) Rig->AddTrauma(FMath::Clamp(Amount / 40.f, 0.08f, 0.4f));
@@ -272,7 +274,7 @@ void ABreachlinePlayerController::NotifyExplosion(const FVector& Location, float
 {
 	if (!Rig) return;
 
-	const FVector Origin = Player ? Player->GetActorLocation() : Rig->GetActorLocation();
+	const FVector Origin = OperatorPawn ? OperatorPawn->GetActorLocation() : Rig->GetActorLocation();
 	const float DistanceM = FVector::Dist(Origin, Location) / MetersToUU(1.f);
 	const float Falloff = FMath::Clamp(1.f - DistanceM / FMath::Max(1.f, RadiusMeters * 2.f), 0.f, 1.f);
 	Rig->AddTrauma(Hud::ExplosionTrauma * Falloff);
@@ -294,7 +296,7 @@ void ABreachlinePlayerController::NotifyHeal(float Amount)
 	HealAmount = Amount;
 	if (UBreachlineAudioSubsystem* Audio = GetWorld()->GetSubsystem<UBreachlineAudioSubsystem>())
 	{
-		Audio->PlayPickup(Player ? Player->GetActorLocation() : FVector::ZeroVector);
+		Audio->PlayPickup(OperatorPawn ? OperatorPawn->GetActorLocation() : FVector::ZeroVector);
 	}
 }
 
@@ -324,10 +326,10 @@ void ABreachlinePlayerController::RefreshThreatPicture(float DeltaSeconds)
 {
 	Threats.Reset();
 
-	if (!Player) return;
+	if (!OperatorPawn) return;
 
 	UWorld* World = GetWorld();
-	const FVector PlayerLocation = Player->GetActorLocation();
+	const FVector PlayerLocation = OperatorPawn->GetActorLocation();
 	const float Now = World->GetTimeSeconds();
 
 	float MaxWeight = 0.f;
@@ -443,18 +445,18 @@ void ABreachlinePlayerController::BuildSnapshot()
 	UWorld* World = GetWorld();
 	FHudSnapshot SnapshotOut;
 
-	if (Player && Player->GetHealthComponent())
+	if (OperatorPawn && OperatorPawn->GetHealthComponent())
 	{
-		UHealthComponent* Health = Player->GetHealthComponent();
+		UHealthComponent* Health = OperatorPawn->GetHealthComponent();
 		SnapshotOut.Health = Health->GetHealth();
 		SnapshotOut.MaxHealth = Health->GetMaxHealth();
 		SnapshotOut.Armor = Health->GetArmor();
 		SnapshotOut.MaxArmor = Health->GetMaxArmor();
 	}
 
-	if (Player && Player->GetLoadout())
+	if (OperatorPawn && OperatorPawn->GetLoadout())
 	{
-		UWeaponManagerComponent* Loadout = Player->GetLoadout();
+		UWeaponManagerComponent* Loadout = OperatorPawn->GetLoadout();
 		if (UWeaponComponent* Weapon = Loadout->GetActiveWeapon())
 		{
 			SnapshotOut.MagAmmo = Weapon->MagAmmo;
@@ -465,11 +467,11 @@ void ABreachlinePlayerController::BuildSnapshot()
 		}
 	}
 
-	SnapshotOut.Grenades = Player ? Player->GetGrenades() : 0;
-	SnapshotOut.MedkitsUsed = Player ? Player->GetMedkitsUsed() : 0;
-	SnapshotOut.bSprinting = Player && Player->IsSprinting();
-	SnapshotOut.bAiming = Player && Player->IsAiming();
-	SnapshotOut.bCrouched = Player && Player->bIsCrouched;
+	SnapshotOut.Grenades = OperatorPawn ? OperatorPawn->GetGrenades() : 0;
+	SnapshotOut.MedkitsUsed = OperatorPawn ? OperatorPawn->GetMedkitsUsed() : 0;
+	SnapshotOut.bSprinting = OperatorPawn && OperatorPawn->IsSprinting();
+	SnapshotOut.bAiming = OperatorPawn && OperatorPawn->IsAiming();
+	SnapshotOut.bCrouched = OperatorPawn && OperatorPawn->bIsCrouched;
 
 	if (UProgressionSubsystem* Progression = World->GetSubsystem<UProgressionSubsystem>())
 	{

@@ -51,7 +51,7 @@ void ABreachlinePlayerCharacter::BeginPlay()
 	{
 		// Project Settings can make the operator tougher or squishier without
 		// touching code; 1.0 is the authored balance.
-		Health->DamageTakenMultiplier = UBreachlineSettings::Get()->PlayerDamageTakenMultiplier;
+		Health->DamageTakenMultiplier = UBreachlineSettings::Get()->PlayerDamageTakenMult;
 	}
 
 	if (const UBreachlineSettings* Settings = UBreachlineSettings::Get())

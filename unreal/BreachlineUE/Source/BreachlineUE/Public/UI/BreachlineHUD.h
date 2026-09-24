@@ -33,9 +33,13 @@ public:
 
 	virtual void DrawHUD() override;
 
-	/** Master switch: F1 in the shipped game (also used by the screenshot tests). */
+	/**
+	 * Master switch for the tactical overlay (also used by the screenshot tests).
+	 * Not named `bShowHud`: the check is case-insensitive, so it would clash with
+	 * AHUD::bShowHUD, which the engine uses to skip PostRender entirely.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Breachline|HUD")
-	bool bShowHud = true;
+	bool bDrawTacticalHud = true;
 
 protected:
 	// --- sections -------------------------------------------------------------

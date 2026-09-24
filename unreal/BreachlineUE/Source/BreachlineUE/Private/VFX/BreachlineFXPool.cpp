@@ -192,7 +192,7 @@ void ABreachlineFXPool::Tick(float DeltaSeconds)
 			FTransform Xform;
 			Bursts->GetInstanceTransform(Slot.InstanceIndex, Xform, true);
 			Xform.SetScale3D(FVector(Radius / 50.f));
-			Bursts->UpdateInstanceTransform(Slot.InstanceIndex, Xform, true, true, true);
+			Bursts->UpdateInstanceTransform(Slot.InstanceIndex, Xform, /*bWorldSpace*/ true, /*bMarkRenderStateDirty*/ true);
 		}
 	}
 

@@ -41,7 +41,7 @@ void ABreachlineEnemyCharacter::BeginPlay()
 
 	if (Health)
 	{
-		Health->DamageTakenMultiplier = UBreachlineSettings::Get()->EnemyDamageTakenMultiplier;
+		Health->DamageTakenMultiplier = UBreachlineSettings::Get()->EnemyDamageTakenMult;
 		Health->MaxHealth = Archetype.MaxHealth;
 		Health->MaxArmor = FMath::Max(Archetype.Armor, 1.f);
 		Health->Armor = Archetype.Armor;

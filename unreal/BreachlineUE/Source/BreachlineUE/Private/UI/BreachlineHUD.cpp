@@ -50,7 +50,7 @@ void ABreachlineHUD::DrawHUD()
 {
 	Super::DrawHUD();
 
-	if (!bShowHud || !Canvas) return;
+	if (!bDrawTacticalHud || !Canvas) return;
 
 	ABreachlinePlayerController* PC = GetPlayerControllerSafe();
 	if (!PC || PC->GetSnapshot().MaxHealth <= 0.f) return;

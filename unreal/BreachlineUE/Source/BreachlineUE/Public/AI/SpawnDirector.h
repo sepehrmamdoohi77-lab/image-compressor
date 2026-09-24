@@ -68,7 +68,8 @@ protected:
 	/** Finds a spot that is not already occupied by a squadmate or the player. */
 	bool IsLocationFree(const FVector& Location, float MinDistanceM) const;
 
-	UPROPERTY() TObjectPtr<ABreachlineGameMode> Owner = nullptr;
+	/** Cannot be called `Owner`: AActor already has a reflected member by that name. */
+	UPROPERTY() TObjectPtr<ABreachlineGameMode> GameModeOwner = nullptr;
 	UPROPERTY() TObjectPtr<ABreachlinePlayerCharacter> Player = nullptr;
 
 	UPROPERTY() TArray<ABreachlineEnemyCharacter*> LiveEnemies;

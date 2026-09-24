@@ -25,7 +25,7 @@ ASpawnDirector::ASpawnDirector()
 void ASpawnDirector::BeginRound(const FRoundDef& InRound, ABreachlineGameMode* InOwner)
 {
 	Round = InRound;
-	Owner = InOwner;
+	GameModeOwner = InOwner;
 	Player = Cast<ABreachlinePlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 
 	PruneDead();

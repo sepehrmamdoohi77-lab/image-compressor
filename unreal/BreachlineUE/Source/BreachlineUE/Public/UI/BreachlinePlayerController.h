@@ -20,15 +20,15 @@ class UInputMappingContext;
 class ABreachlineGameMode;
 
 /** What the player last shot at, for the hit marker + damage numbers. */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FBreachlineHitMarker
 {
 	GENERATED_BODY()
 
-	UPROPERTY() bool bHeadshot = false;
-	UPROPERTY() bool bKill = false;
-	UPROPERTY() float Time = -1000.f;
-	UPROPERTY() int32 Damage = 0;
+	UPROPERTY(BlueprintReadOnly, Category = "Breachline|HUD") bool bHeadshot = false;
+	UPROPERTY(BlueprintReadOnly, Category = "Breachline|HUD") bool bKill = false;
+	UPROPERTY(BlueprintReadOnly, Category = "Breachline|HUD") float Time = -1000.f;
+	UPROPERTY(BlueprintReadOnly, Category = "Breachline|HUD") int32 Damage = 0;
 };
 
 UCLASS()
@@ -86,8 +86,10 @@ public:
 	 * One resolved player bullet: hit marker, damage number and the kill feed.
 	 * Scoring (score/headshots/kills) is claimed by the combat library the moment
 	 * the victim dies, so this is presentation only.
+	 *
+	 * Deliberately NOT a UFUNCTION: FBulletResult holds a TWeakObjectPtr, which UHT
+	 * refuses to expose to Blueprint. Only C++ (the combat library) calls this.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Breachline|Feedback")
 	void NotifyShotResolved(const FBulletResult& Report);
 
 	/** A round cracked past the player's head. */
@@ -143,9 +145,13 @@ public:
 	bool ProjectWorldToScreenPixels(const FVector& World, FVector2D& OutPixels) const;
 
 protected:
-	/** Bound to the possessed pawn's health: damage flash, direction, no-hit bonus. */
+	/**
+	 * Bound to the possessed pawn's health: damage flash, direction, no-hit bonus.
+	 * The parameter cannot be called `Instigator`: AActor already has a reflected
+	 * member by that name and UHT forbids shadowing it.
+	 */
 	UFUNCTION()
-	void HandlePlayerHealthChanged(float NewHealth, float Delta, AActor* Instigator);
+	void HandlePlayerHealthChanged(float NewHealth, float Delta, AActor* Causer);
 
 	void RefreshThreatPicture(float DeltaSeconds);
 	void SpawnRig();
@@ -154,7 +160,11 @@ protected:
 
 	UPROPERTY() TObjectPtr<UInputMappingContext> InputContext = nullptr;
 	UPROPERTY() TObjectPtr<ATacticalCameraRig> Rig = nullptr;
-	UPROPERTY() TObjectPtr<ABreachlinePlayerCharacter> Player = nullptr;
+	/**
+	 * The operator pawn. NOT named `Player`: APlayerController already owns a
+	 * reflected `Player` (the UPlayer*), and UHT forbids shadowing it.
+	 */
+	UPROPERTY() TObjectPtr<ABreachlinePlayerCharacter> OperatorPawn = nullptr;
 
 	UPROPERTY() FHudSnapshot Snapshot;
 	UPROPERTY() FBreachlineHitMarker HitMarker;

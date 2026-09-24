@@ -58,12 +58,32 @@ state for the session.
 | `error : BlueprintReadWrite should not be used on private members` | add `meta = (AllowPrivateAccess = "true")` |
 | `The following modules are missing or built with a different engine version` | normal on a fresh clone — say **Yes** to rebuild |
 
-### Step 3 — if it is a source error
+### Step 3 — run the checker before rebuilding
+
+```
+python3 ../tools/check_uht.py          # from Source/BreachlineUE, or pass the path
+```
+
+It is a static read of the module (no engine needed) that reproduces the error
+classes UnrealHeaderTool stops on: name shadowing against engine base classes, a
+`UFUNCTION` using a struct that is not `USTRUCT(BlueprintType)`, weak pointers
+exposed to Blueprint, `AddDynamic` targets that are not `UFUNCTION()`s, methods
+declared but never defined, `.generated.h` pairing, and engine types used with the
+header that declares them out of scope. It exits non-zero when it finds anything.
+
+### Step 4 — if it is a source error
 
 Send the first ~20 lines that contain `error`. This project was authored without an
 engine available to the author, so it is reviewed rather than machine-verified; a
 build error is expected to be reported rather than worked around, and every report
 gets fixed at the source.
+
+**Already fixed from the first build:** `ABreachlineHUD::bShowHud` (shadowed
+`AHUD::bShowHUD`, renamed to `bDrawTacticalHud`), `ABreachlinePlayerController::Player`
+(shadowed `APlayerController::Player`, renamed to `OperatorPawn`), the `Instigator`
+parameter of `HandlePlayerHealthChanged` (renamed to `Causer`), `ASpawnDirector::Owner`
+(renamed to `GameModeOwner`), `FBreachlineHitMarker` (now `USTRUCT(BlueprintType)`),
+and the two `AddDynamic` handlers on `ABreachlineGameMode` that were not `UFUNCTION()`s.
 
 Known-good patterns already handled in the code — if a *new* error looks like one of
 these, it is the same class of problem and the same fix applies:
