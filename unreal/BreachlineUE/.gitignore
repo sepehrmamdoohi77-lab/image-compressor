@@ -1,0 +1,18 @@
+# Unreal Engine generated folders — never commit these.
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+.vs/
+.vscode/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.xcodeproj/
+*.xcworkspace/
+StagedBuilds/
+LocalBuilds/

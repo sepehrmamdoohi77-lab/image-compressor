@@ -1,0 +1,45 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "5.8",
+	"Category": "Game",
+	"Description": "BREACHLINE UE — isometric tactical shooter (Unreal Engine 5.8 port of the web prototype).",
+	"Modules": [
+		{
+			"Name": "BreachlineUE",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"CoreUObject",
+				"EnhancedInput",
+				"AIModule",
+				"NavigationSystem",
+				"Niagara",
+				"UMG",
+				"AudioMixer"
+			]
+		}
+	],
+	"Plugins": [
+		{ "Name": "EnhancedInput", "Enabled": true },
+		{ "Name": "Niagara", "Enabled": true },
+		{ "Name": "ModelingToolsEditorMode", "Enabled": true },
+		{ "Name": "PCG", "Enabled": true },
+		{ "Name": "Water", "Enabled": false },
+		{ "Name": "MetaHuman", "Enabled": false },
+		{ "Name": "MetaHumanCrowd", "Enabled": false },
+		{ "Name": "PythonScriptPlugin", "Enabled": true },
+		{ "Name": "EditorScriptingUtilities", "Enabled": true },
+		{ "Name": "SoundUtilities", "Enabled": true },
+		{ "Name": "GameplayCameras", "Enabled": true },
+		{ "Name": "MotionWarping", "Enabled": true },
+		{ "Name": "AnimationWarping", "Enabled": false },
+		{ "Name": "StateTree", "Enabled": true },
+		{ "Name": "MLAdapter", "Enabled": false }
+	],
+	"TargetPlatforms": [
+		"Windows",
+		"Linux",
+		"Mac"
+	]
+}

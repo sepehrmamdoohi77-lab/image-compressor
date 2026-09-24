@@ -1,0 +1,131 @@
+{
+	"_comment": "Mirror of Breachline::DefaultEnemyArchetypes() and DefaultRounds(). Imported into /Game/Breachline/Data/DT_Enemies and DT_Rounds by Content/Python/breachline_assets.py. Weights are index-matched to the archetype order below: [rifleman, assault, heavy, support].",
+	"Enemies": {
+		"Name": "DT_Enemies",
+		"Rows": {
+			"rifleman": {
+				"Id": "rifleman",
+				"DisplayName": "Hostile Rifleman",
+				"MaxHealth": 70.0,
+				"Armor": 10.0,
+				"Weapon": "Rifle",
+				"Accuracy": 0.5,
+				"Aggression": 0.45,
+				"SpeedMps": 3.4,
+				"PreferredMin": 9.0,
+				"PreferredMax": 20.0,
+				"BurstShots": 4.0,
+				"BurstPause": 0.9,
+				"Scale": 1.0,
+				"ScoreValue": 100,
+				"Tint": { "R": 0.541, "G": 0.184, "B": 0.169, "A": 1.0 }
+			},
+			"assault": {
+				"Id": "assault",
+				"DisplayName": "Assault Runner",
+				"MaxHealth": 55.0,
+				"Armor": 0.0,
+				"Weapon": "SMG",
+				"Accuracy": 0.42,
+				"Aggression": 0.85,
+				"SpeedMps": 4.6,
+				"PreferredMin": 4.0,
+				"PreferredMax": 11.0,
+				"BurstShots": 7.0,
+				"BurstPause": 0.7,
+				"Scale": 0.97,
+				"ScoreValue": 120,
+				"Tint": { "R": 0.69, "G": 0.416, "B": 0.118, "A": 1.0 }
+			},
+			"heavy": {
+				"Id": "heavy",
+				"DisplayName": "Heavy Gunner",
+				"MaxHealth": 160.0,
+				"Armor": 45.0,
+				"Weapon": "Shotgun",
+				"Accuracy": 0.55,
+				"Aggression": 0.6,
+				"SpeedMps": 2.5,
+				"PreferredMin": 5.0,
+				"PreferredMax": 13.0,
+				"BurstShots": 2.0,
+				"BurstPause": 1.3,
+				"Scale": 1.12,
+				"ScoreValue": 200,
+				"Tint": { "R": 0.29, "G": 0.31, "B": 0.353, "A": 1.0 }
+			},
+			"support": {
+				"Id": "support",
+				"DisplayName": "Support Marksman",
+				"MaxHealth": 60.0,
+				"Armor": 15.0,
+				"Weapon": "DMR",
+				"Accuracy": 0.68,
+				"Aggression": 0.3,
+				"SpeedMps": 3.0,
+				"PreferredMin": 15.0,
+				"PreferredMax": 27.0,
+				"BurstShots": 1.0,
+				"BurstPause": 1.6,
+				"Scale": 1.0,
+				"ScoreValue": 150,
+				"Tint": { "R": 0.184, "G": 0.42, "B": 0.353, "A": 1.0 }
+			}
+		}
+	},
+	"Rounds": {
+		"Name": "DT_Rounds",
+		"Rows": {
+			"Round1": {
+				"Label": "ROUND 1 — CONTACT",
+				"Briefing": "Hostile rifle squad in the compound. Sweep and clear.",
+				"TotalEnemies": 4,
+				"MaxAlive": 4,
+				"HealthMult": 0.9,
+				"AccuracyMult": 0.8,
+				"AggressionMult": 0.8,
+				"ArchetypeWeights": [3.0, 1.0, 0.0, 0.0]
+			},
+			"Round2": {
+				"Label": "ROUND 2 — PRESSURE",
+				"Briefing": "More runners inbound. Watch the flanks and keep moving.",
+				"TotalEnemies": 6,
+				"MaxAlive": 5,
+				"HealthMult": 0.95,
+				"AccuracyMult": 0.9,
+				"AggressionMult": 0.9,
+				"ArchetypeWeights": [2.0, 3.0, 0.0, 1.0]
+			},
+			"Round3": {
+				"Label": "ROUND 3 — MIXED FORCE",
+				"Briefing": "Mixed enemy force with marksman support. Use cover.",
+				"TotalEnemies": 7,
+				"MaxAlive": 6,
+				"HealthMult": 1.0,
+				"AccuracyMult": 1.0,
+				"AggressionMult": 1.0,
+				"ArchetypeWeights": [3.0, 2.0, 1.0, 1.0]
+			},
+			"Round4": {
+				"Label": "ROUND 4 — HEAVY RESISTANCE",
+				"Briefing": "Heavy gunners holding the plaza. Grenades are your friend (G).",
+				"TotalEnemies": 8,
+				"MaxAlive": 6,
+				"HealthMult": 1.05,
+				"AccuracyMult": 1.05,
+				"AggressionMult": 1.1,
+				"ArchetypeWeights": [2.0, 2.0, 2.0, 2.0]
+			},
+			"Round5": {
+				"Label": "ROUND 5 — FINAL STAND",
+				"Briefing": "Everything they have left. Hold the line. Finish it.",
+				"TotalEnemies": 10,
+				"MaxAlive": 7,
+				"HealthMult": 1.1,
+				"AccuracyMult": 1.12,
+				"AggressionMult": 1.2,
+				"ArchetypeWeights": [3.0, 3.0, 2.0, 2.0]
+			}
+		}
+	}
+}
