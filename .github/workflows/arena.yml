@@ -1,0 +1,40 @@
+name: Tactical Arena web checks
+on:
+  push:
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: tactical-arena/package-lock.json
+      - run: pip install -r requirements-dev.txt
+      - run: npm --prefix tactical-arena ci --no-audit --no-fund
+      - run: python -m pytest -q
+      - run: ruff check arena_server tests/test_arena_*.py scripts/verify_arena_*.py
+      - run: npm --prefix tactical-arena run check && npm --prefix tactical-arena run test:unit && npm --prefix tactical-arena run build
+      - name: Real socket and browser acceptance
+        run: |
+          python -m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1 --ws-max-size 4096 > /tmp/arena-server.log 2>&1 &
+          backend=$!
+          npm --prefix tactical-arena run dev > /tmp/arena-client.log 2>&1 &
+          frontend=$!
+          trap 'kill $backend $frontend || true' EXIT
+          python scripts/wait_for_arena.py
+          python scripts/verify_arena_network.py
+          python scripts/verify_arena_combat.py
+          python scripts/verify_arena_maps.py
+          npm --prefix tactical-arena run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: arena-browser-failures
+          path: tactical-arena/test-results/

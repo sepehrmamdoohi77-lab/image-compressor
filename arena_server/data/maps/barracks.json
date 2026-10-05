@@ -1,0 +1,204 @@
+{
+  "id": "barracks",
+  "name": "BARRACKS",
+  "sector": "09",
+  "size": 44,
+  "theme": {
+    "sky": "#a9b6bc",
+    "ground": "#b0b6b6",
+    "road": "#596873",
+    "metal": "#547082",
+    "trim": "#c7cabd"
+  },
+  "description": "Low military blocks and a central muster road. Offset barrack ends create close-range approaches without sealing the yard.",
+  "spawns": {
+    "blue": [
+      {
+        "x": -4,
+        "z": 18
+      },
+      {
+        "x": -1.4,
+        "z": 18
+      },
+      {
+        "x": 1.4,
+        "z": 18
+      },
+      {
+        "x": 4,
+        "z": 18
+      }
+    ],
+    "red": [
+      {
+        "x": 4,
+        "z": -18
+      },
+      {
+        "x": 1.4,
+        "z": -18
+      },
+      {
+        "x": -1.4,
+        "z": -18
+      },
+      {
+        "x": -4,
+        "z": -18
+      }
+    ]
+  },
+  "obstacles": [
+    {
+      "id": "bar-00",
+      "kind": "wall",
+      "x": -4.8,
+      "z": 14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "bar-01",
+      "kind": "wall",
+      "x": 4.8,
+      "z": -14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "bar-02",
+      "kind": "building",
+      "x": -18.4,
+      "z": -9,
+      "w": 5,
+      "d": 8,
+      "h": 3.5,
+      "tone": "gray"
+    },
+    {
+      "id": "bar-03",
+      "kind": "building",
+      "x": 18.4,
+      "z": 9,
+      "w": 5,
+      "d": 8,
+      "h": 3.5,
+      "tone": "gray"
+    },
+    {
+      "id": "bar-04",
+      "kind": "building",
+      "x": -18.4,
+      "z": 9.5,
+      "w": 5,
+      "d": 6,
+      "h": 3.6,
+      "tone": "sand"
+    },
+    {
+      "id": "bar-05",
+      "kind": "building",
+      "x": 18.4,
+      "z": -9.5,
+      "w": 5,
+      "d": 6,
+      "h": 3.6,
+      "tone": "sand"
+    },
+    {
+      "id": "bar-06",
+      "kind": "building",
+      "x": -8,
+      "z": -6,
+      "w": 4,
+      "d": 7,
+      "h": 3.3,
+      "tone": "gray"
+    },
+    {
+      "id": "bar-07",
+      "kind": "building",
+      "x": 8,
+      "z": 6,
+      "w": 4,
+      "d": 7,
+      "h": 3.3,
+      "tone": "gray"
+    },
+    {
+      "id": "bar-08",
+      "kind": "wall",
+      "x": -8,
+      "z": 7,
+      "w": 0.6,
+      "d": 4,
+      "h": 1.8,
+      "tone": "gray"
+    },
+    {
+      "id": "bar-09",
+      "kind": "wall",
+      "x": 8,
+      "z": -7,
+      "w": 0.6,
+      "d": 4,
+      "h": 1.8,
+      "tone": "gray"
+    },
+    {
+      "id": "bar-10",
+      "kind": "sandbags",
+      "x": 0,
+      "z": -4,
+      "w": 3,
+      "d": 0.9,
+      "h": 0.85,
+      "tone": "sand"
+    },
+    {
+      "id": "bar-11",
+      "kind": "sandbags",
+      "x": 0,
+      "z": 4,
+      "w": 3,
+      "d": 0.9,
+      "h": 0.85,
+      "tone": "sand"
+    },
+    {
+      "id": "bar-12",
+      "kind": "crate",
+      "x": -12,
+      "z": 10,
+      "w": 1.7,
+      "d": 1.7,
+      "h": 1.3,
+      "tone": "olive"
+    },
+    {
+      "id": "bar-13",
+      "kind": "crate",
+      "x": 12,
+      "z": -10,
+      "w": 1.7,
+      "d": 1.7,
+      "h": 1.3,
+      "tone": "olive"
+    },
+    {
+      "id": "bar-14",
+      "kind": "vehicle",
+      "x": 0,
+      "z": 11,
+      "w": 2.2,
+      "d": 3.8,
+      "h": 1.6,
+      "tone": "olive"
+    }
+  ]
+}

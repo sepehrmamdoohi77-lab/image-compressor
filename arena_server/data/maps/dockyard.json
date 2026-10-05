@@ -1,0 +1,234 @@
+{
+  "id": "dockyard",
+  "name": "DOCKYARD",
+  "sector": "02",
+  "size": 44,
+  "theme": {
+    "sky": "#9caeb7",
+    "ground": "#b5bdba",
+    "road": "#5b6e76",
+    "metal": "#406b7c",
+    "trim": "#d1bb82"
+  },
+  "description": "Parallel cargo rows and a central loading apron. Wide outer flanks connect separated dock staging areas.",
+  "spawns": {
+    "blue": [
+      {
+        "x": -4,
+        "z": 18
+      },
+      {
+        "x": -1.4,
+        "z": 18
+      },
+      {
+        "x": 1.4,
+        "z": 18
+      },
+      {
+        "x": 4,
+        "z": 18
+      }
+    ],
+    "red": [
+      {
+        "x": 4,
+        "z": -18
+      },
+      {
+        "x": 1.4,
+        "z": -18
+      },
+      {
+        "x": -1.4,
+        "z": -18
+      },
+      {
+        "x": -4,
+        "z": -18
+      }
+    ]
+  },
+  "obstacles": [
+    {
+      "id": "doc-00",
+      "kind": "wall",
+      "x": -4.8,
+      "z": 14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "doc-01",
+      "kind": "wall",
+      "x": 4.8,
+      "z": -14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "doc-02",
+      "kind": "container",
+      "x": -8,
+      "z": -9,
+      "w": 3,
+      "d": 8,
+      "h": 2.5,
+      "tone": "gray"
+    },
+    {
+      "id": "doc-03",
+      "kind": "container",
+      "x": 8,
+      "z": 9,
+      "w": 3,
+      "d": 8,
+      "h": 2.5,
+      "tone": "gray"
+    },
+    {
+      "id": "doc-04",
+      "kind": "container",
+      "x": -8,
+      "z": 8,
+      "w": 3,
+      "d": 6,
+      "h": 2.5,
+      "tone": "olive"
+    },
+    {
+      "id": "doc-05",
+      "kind": "container",
+      "x": 8,
+      "z": -8,
+      "w": 3,
+      "d": 6,
+      "h": 2.5,
+      "tone": "olive"
+    },
+    {
+      "id": "doc-06",
+      "kind": "container",
+      "x": -18,
+      "z": -10,
+      "w": 5,
+      "d": 7,
+      "h": 2.5,
+      "tone": "gray"
+    },
+    {
+      "id": "doc-07",
+      "kind": "container",
+      "x": 18,
+      "z": 10,
+      "w": 5,
+      "d": 7,
+      "h": 2.5,
+      "tone": "gray"
+    },
+    {
+      "id": "doc-08",
+      "kind": "container",
+      "x": -18,
+      "z": 10,
+      "w": 5,
+      "d": 5,
+      "h": 2.5,
+      "tone": "olive"
+    },
+    {
+      "id": "doc-09",
+      "kind": "container",
+      "x": 18,
+      "z": -10,
+      "w": 5,
+      "d": 5,
+      "h": 2.5,
+      "tone": "olive"
+    },
+    {
+      "id": "doc-10",
+      "kind": "crate",
+      "x": -2,
+      "z": -1,
+      "w": 1.6,
+      "d": 1.6,
+      "h": 1.2,
+      "tone": "sand"
+    },
+    {
+      "id": "doc-11",
+      "kind": "crate",
+      "x": 2,
+      "z": 1,
+      "w": 1.6,
+      "d": 1.6,
+      "h": 1.2,
+      "tone": "sand"
+    },
+    {
+      "id": "doc-12",
+      "kind": "barrier",
+      "x": 0,
+      "z": -6,
+      "w": 3.4,
+      "d": 0.8,
+      "h": 1,
+      "tone": "gray"
+    },
+    {
+      "id": "doc-13",
+      "kind": "barrier",
+      "x": 0,
+      "z": 6,
+      "w": 3.4,
+      "d": 0.8,
+      "h": 1,
+      "tone": "gray"
+    },
+    {
+      "id": "doc-14",
+      "kind": "vehicle",
+      "x": -13,
+      "z": 0,
+      "w": 2.2,
+      "d": 4.2,
+      "h": 1.6,
+      "tone": "olive"
+    },
+    {
+      "id": "doc-15",
+      "kind": "sandbags",
+      "x": 13,
+      "z": 0,
+      "w": 3,
+      "d": 0.9,
+      "h": 0.85,
+      "tone": "sand"
+    },
+    {
+      "id": "doc-16",
+      "kind": "crate",
+      "x": -13,
+      "z": 12,
+      "w": 1.6,
+      "d": 1.6,
+      "h": 1.1,
+      "tone": "sand"
+    },
+    {
+      "id": "doc-17",
+      "kind": "crate",
+      "x": 13,
+      "z": -12,
+      "w": 1.6,
+      "d": 1.6,
+      "h": 1.1,
+      "tone": "sand"
+    }
+  ]
+}

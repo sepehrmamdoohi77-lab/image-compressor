@@ -1,7 +1,9 @@
 from pathlib import Path
+from contextlib import asynccontextmanager
 from urllib.parse import quote
 from collections import OrderedDict
 import hashlib
+import os
 import uuid
 from io import BytesIO
 import asyncio
@@ -17,6 +19,7 @@ from pillow_heif import register_heif_opener
 import logging
 
 from auth import router as auth_router
+from arena_server.app import create_arena_app
 
 BASE = Path(__file__).resolve().parent
 UPLOADS = BASE / "uploads"
@@ -24,8 +27,21 @@ OUTPUTS = BASE / "outputs"
 UPLOADS.mkdir(exist_ok=True)
 OUTPUTS.mkdir(exist_ok=True)
 
-app = FastAPI(title="Image Compressor MVP")
+arena_app = create_arena_app()
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    await arena_app.state.startup()
+    try:
+        yield
+    finally:
+        await arena_app.state.shutdown()
+
+
+app = FastAPI(title="Image Compressor MVP", lifespan=lifespan)
 app.include_router(auth_router)
+app.mount("/arena", arena_app)
 logger = logging.getLogger(__name__)
 register_heif_opener()
 
@@ -480,6 +496,11 @@ async def encode_video_async(
 
 @app.get("/", response_class=HTMLResponse)
 def home():
+    if os.environ.get("ARENA_AS_HOME") == "1":
+        bundle = BASE / "tactical-arena" / "dist" / "index.html"
+        if not bundle.exists():
+            raise HTTPException(503, "Build the Tactical Arena browser bundle before serving it.")
+        return FileResponse(bundle, headers={"Cache-Control": "no-cache"})
     return (BASE / "static" / "index.html").read_text(encoding="utf-8")
 
 
