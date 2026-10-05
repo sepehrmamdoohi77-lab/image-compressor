@@ -1,0 +1,224 @@
+{
+  "id": "checkpoint",
+  "name": "CHECKPOINT",
+  "sector": "05",
+  "size": 44,
+  "theme": {
+    "sky": "#c8bca4",
+    "ground": "#c6b58e",
+    "road": "#77715d",
+    "metal": "#82704c",
+    "trim": "#dad0ac"
+  },
+  "description": "A fortified crossing with staggered concrete gates and parked patrol vehicles. The side routes offer safer approaches.",
+  "spawns": {
+    "blue": [
+      {
+        "x": -4,
+        "z": 18
+      },
+      {
+        "x": -1.4,
+        "z": 18
+      },
+      {
+        "x": 1.4,
+        "z": 18
+      },
+      {
+        "x": 4,
+        "z": 18
+      }
+    ],
+    "red": [
+      {
+        "x": 4,
+        "z": -18
+      },
+      {
+        "x": 1.4,
+        "z": -18
+      },
+      {
+        "x": -1.4,
+        "z": -18
+      },
+      {
+        "x": -4,
+        "z": -18
+      }
+    ]
+  },
+  "obstacles": [
+    {
+      "id": "che-00",
+      "kind": "wall",
+      "x": -4.8,
+      "z": 14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "che-01",
+      "kind": "wall",
+      "x": 4.8,
+      "z": -14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "che-02",
+      "kind": "building",
+      "x": -18.4,
+      "z": -9,
+      "w": 5,
+      "d": 8,
+      "h": 3.8,
+      "tone": "gray"
+    },
+    {
+      "id": "che-03",
+      "kind": "building",
+      "x": 18.4,
+      "z": 9,
+      "w": 5,
+      "d": 8,
+      "h": 3.8,
+      "tone": "gray"
+    },
+    {
+      "id": "che-04",
+      "kind": "building",
+      "x": -18.4,
+      "z": 9.5,
+      "w": 5,
+      "d": 6,
+      "h": 3.6,
+      "tone": "sand"
+    },
+    {
+      "id": "che-05",
+      "kind": "building",
+      "x": 18.4,
+      "z": -9.5,
+      "w": 5,
+      "d": 6,
+      "h": 3.6,
+      "tone": "sand"
+    },
+    {
+      "id": "che-06",
+      "kind": "wall",
+      "x": -6,
+      "z": 6,
+      "w": 8,
+      "d": 0.7,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "che-07",
+      "kind": "wall",
+      "x": 6,
+      "z": -6,
+      "w": 8,
+      "d": 0.7,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "che-08",
+      "kind": "barrier",
+      "x": 2,
+      "z": 6,
+      "w": 3,
+      "d": 0.8,
+      "h": 1,
+      "tone": "gray"
+    },
+    {
+      "id": "che-09",
+      "kind": "barrier",
+      "x": -2,
+      "z": -6,
+      "w": 3,
+      "d": 0.8,
+      "h": 1,
+      "tone": "gray"
+    },
+    {
+      "id": "che-10",
+      "kind": "vehicle",
+      "x": -12,
+      "z": -6,
+      "w": 2.3,
+      "d": 4.4,
+      "h": 1.6,
+      "tone": "sand"
+    },
+    {
+      "id": "che-11",
+      "kind": "vehicle",
+      "x": 12,
+      "z": 6,
+      "w": 2.3,
+      "d": 4.4,
+      "h": 1.6,
+      "tone": "olive"
+    },
+    {
+      "id": "che-12",
+      "kind": "sandbags",
+      "x": 0,
+      "z": 0,
+      "w": 3,
+      "d": 1,
+      "h": 0.85,
+      "tone": "sand"
+    },
+    {
+      "id": "che-13",
+      "kind": "crate",
+      "x": -6,
+      "z": -11,
+      "w": 1.8,
+      "d": 1.8,
+      "h": 1.2,
+      "tone": "sand"
+    },
+    {
+      "id": "che-14",
+      "kind": "crate",
+      "x": 6,
+      "z": 11,
+      "w": 1.8,
+      "d": 1.8,
+      "h": 1.2,
+      "tone": "sand"
+    },
+    {
+      "id": "che-15",
+      "kind": "wall",
+      "x": -13,
+      "z": 4,
+      "w": 0.6,
+      "d": 4,
+      "h": 1.7,
+      "tone": "sand"
+    },
+    {
+      "id": "che-16",
+      "kind": "wall",
+      "x": 13,
+      "z": -4,
+      "w": 0.6,
+      "d": 4,
+      "h": 1.7,
+      "tone": "sand"
+    }
+  ]
+}

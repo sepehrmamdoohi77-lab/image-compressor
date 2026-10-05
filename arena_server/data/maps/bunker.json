@@ -1,0 +1,224 @@
+{
+  "id": "bunker",
+  "name": "BUNKER",
+  "sector": "10",
+  "size": 44,
+  "theme": {
+    "sky": "#acaba0",
+    "ground": "#a7aaa2",
+    "road": "#5d6260",
+    "metal": "#a0754f",
+    "trim": "#cbb780"
+  },
+  "description": "Reinforced outdoor partitions with offset passageways. High cover favors flanks while the central gaps remain contestable.",
+  "spawns": {
+    "blue": [
+      {
+        "x": -4,
+        "z": 18
+      },
+      {
+        "x": -1.4,
+        "z": 18
+      },
+      {
+        "x": 1.4,
+        "z": 18
+      },
+      {
+        "x": 4,
+        "z": 18
+      }
+    ],
+    "red": [
+      {
+        "x": 4,
+        "z": -18
+      },
+      {
+        "x": 1.4,
+        "z": -18
+      },
+      {
+        "x": -1.4,
+        "z": -18
+      },
+      {
+        "x": -4,
+        "z": -18
+      }
+    ]
+  },
+  "obstacles": [
+    {
+      "id": "bun-00",
+      "kind": "wall",
+      "x": -4.8,
+      "z": 14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "bun-01",
+      "kind": "wall",
+      "x": 4.8,
+      "z": -14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "bun-02",
+      "kind": "building",
+      "x": -18.4,
+      "z": -9,
+      "w": 5,
+      "d": 8,
+      "h": 4,
+      "tone": "gray"
+    },
+    {
+      "id": "bun-03",
+      "kind": "building",
+      "x": 18.4,
+      "z": 9,
+      "w": 5,
+      "d": 8,
+      "h": 4,
+      "tone": "gray"
+    },
+    {
+      "id": "bun-04",
+      "kind": "building",
+      "x": -18.4,
+      "z": 9.5,
+      "w": 5,
+      "d": 6,
+      "h": 3.6,
+      "tone": "sand"
+    },
+    {
+      "id": "bun-05",
+      "kind": "building",
+      "x": 18.4,
+      "z": -9.5,
+      "w": 5,
+      "d": 6,
+      "h": 3.6,
+      "tone": "sand"
+    },
+    {
+      "id": "bun-06",
+      "kind": "wall",
+      "x": -6,
+      "z": -8,
+      "w": 9,
+      "d": 0.8,
+      "h": 2.5,
+      "tone": "gray"
+    },
+    {
+      "id": "bun-07",
+      "kind": "wall",
+      "x": 6,
+      "z": 8,
+      "w": 9,
+      "d": 0.8,
+      "h": 2.5,
+      "tone": "gray"
+    },
+    {
+      "id": "bun-08",
+      "kind": "wall",
+      "x": -8,
+      "z": 3,
+      "w": 0.8,
+      "d": 6,
+      "h": 2.5,
+      "tone": "gray"
+    },
+    {
+      "id": "bun-09",
+      "kind": "wall",
+      "x": 8,
+      "z": -3,
+      "w": 0.8,
+      "d": 6,
+      "h": 2.5,
+      "tone": "gray"
+    },
+    {
+      "id": "bun-10",
+      "kind": "wall",
+      "x": 0,
+      "z": 0,
+      "w": 3,
+      "d": 0.8,
+      "h": 2.0,
+      "tone": "gray"
+    },
+    {
+      "id": "bun-11",
+      "kind": "barrier",
+      "x": -3,
+      "z": 9,
+      "w": 2.8,
+      "d": 0.9,
+      "h": 1,
+      "tone": "gray"
+    },
+    {
+      "id": "bun-12",
+      "kind": "barrier",
+      "x": 3,
+      "z": -9,
+      "w": 2.8,
+      "d": 0.9,
+      "h": 1,
+      "tone": "gray"
+    },
+    {
+      "id": "bun-13",
+      "kind": "crate",
+      "x": -13,
+      "z": 2,
+      "w": 1.6,
+      "d": 1.6,
+      "h": 1.2,
+      "tone": "olive"
+    },
+    {
+      "id": "bun-14",
+      "kind": "crate",
+      "x": 13,
+      "z": -2,
+      "w": 1.6,
+      "d": 1.6,
+      "h": 1.2,
+      "tone": "olive"
+    },
+    {
+      "id": "bun-15",
+      "kind": "sandbags",
+      "x": -3,
+      "z": -3,
+      "w": 2.6,
+      "d": 0.8,
+      "h": 0.85,
+      "tone": "sand"
+    },
+    {
+      "id": "bun-16",
+      "kind": "sandbags",
+      "x": 3,
+      "z": 3,
+      "w": 2.6,
+      "d": 0.8,
+      "h": 0.85,
+      "tone": "sand"
+    }
+  ]
+}

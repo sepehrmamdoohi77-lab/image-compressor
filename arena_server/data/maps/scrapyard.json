@@ -1,0 +1,224 @@
+{
+  "id": "scrapyard",
+  "name": "SCRAPYARD",
+  "sector": "08",
+  "size": 44,
+  "theme": {
+    "sky": "#acaba0",
+    "ground": "#a7aaa2",
+    "road": "#5d6260",
+    "metal": "#a0754f",
+    "trim": "#cbb780"
+  },
+  "description": "Wreck rows and salvage crates form irregular cover pockets. Several narrow gaps link the flanks to the center.",
+  "spawns": {
+    "blue": [
+      {
+        "x": -4,
+        "z": 18
+      },
+      {
+        "x": -1.4,
+        "z": 18
+      },
+      {
+        "x": 1.4,
+        "z": 18
+      },
+      {
+        "x": 4,
+        "z": 18
+      }
+    ],
+    "red": [
+      {
+        "x": 4,
+        "z": -18
+      },
+      {
+        "x": 1.4,
+        "z": -18
+      },
+      {
+        "x": -1.4,
+        "z": -18
+      },
+      {
+        "x": -4,
+        "z": -18
+      }
+    ]
+  },
+  "obstacles": [
+    {
+      "id": "scr-00",
+      "kind": "wall",
+      "x": -4.8,
+      "z": 14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "scr-01",
+      "kind": "wall",
+      "x": 4.8,
+      "z": -14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "scr-02",
+      "kind": "vehicle",
+      "x": -13,
+      "z": -7,
+      "w": 2.2,
+      "d": 4.4,
+      "h": 1.6,
+      "tone": "sand"
+    },
+    {
+      "id": "scr-03",
+      "kind": "vehicle",
+      "x": 13,
+      "z": 7,
+      "w": 2.2,
+      "d": 4.4,
+      "h": 1.6,
+      "tone": "olive"
+    },
+    {
+      "id": "scr-04",
+      "kind": "vehicle",
+      "x": -7,
+      "z": 7,
+      "w": 2.2,
+      "d": 4.4,
+      "h": 1.6,
+      "tone": "olive"
+    },
+    {
+      "id": "scr-05",
+      "kind": "vehicle",
+      "x": 7,
+      "z": -7,
+      "w": 2.2,
+      "d": 4.4,
+      "h": 1.6,
+      "tone": "sand"
+    },
+    {
+      "id": "scr-06",
+      "kind": "container",
+      "x": -18,
+      "z": 0,
+      "w": 5,
+      "d": 8,
+      "h": 2.5,
+      "tone": "gray"
+    },
+    {
+      "id": "scr-07",
+      "kind": "container",
+      "x": 18,
+      "z": 0,
+      "w": 5,
+      "d": 8,
+      "h": 2.5,
+      "tone": "olive"
+    },
+    {
+      "id": "scr-08",
+      "kind": "wall",
+      "x": 0,
+      "z": 0,
+      "w": 4,
+      "d": 0.7,
+      "h": 1.7,
+      "tone": "gray"
+    },
+    {
+      "id": "scr-09",
+      "kind": "crate",
+      "x": -3,
+      "z": 4,
+      "w": 1.6,
+      "d": 1.6,
+      "h": 1.2,
+      "tone": "sand"
+    },
+    {
+      "id": "scr-10",
+      "kind": "crate",
+      "x": 3,
+      "z": -4,
+      "w": 1.6,
+      "d": 1.6,
+      "h": 1.2,
+      "tone": "sand"
+    },
+    {
+      "id": "scr-11",
+      "kind": "crate",
+      "x": -12,
+      "z": 10,
+      "w": 1.7,
+      "d": 1.7,
+      "h": 1.3,
+      "tone": "olive"
+    },
+    {
+      "id": "scr-12",
+      "kind": "crate",
+      "x": 12,
+      "z": -10,
+      "w": 1.7,
+      "d": 1.7,
+      "h": 1.3,
+      "tone": "olive"
+    },
+    {
+      "id": "scr-13",
+      "kind": "sandbags",
+      "x": -3,
+      "z": -9,
+      "w": 3,
+      "d": 0.9,
+      "h": 0.85,
+      "tone": "sand"
+    },
+    {
+      "id": "scr-14",
+      "kind": "sandbags",
+      "x": 3,
+      "z": 9,
+      "w": 3,
+      "d": 0.9,
+      "h": 0.85,
+      "tone": "sand"
+    },
+    {
+      "id": "scr-15",
+      "kind": "building",
+      "x": -18,
+      "z": -12,
+      "w": 5,
+      "d": 5,
+      "h": 3.7,
+      "tone": "gray"
+    },
+    {
+      "id": "scr-16",
+      "kind": "building",
+      "x": 18,
+      "z": 12,
+      "w": 5,
+      "d": 5,
+      "h": 3.7,
+      "tone": "gray"
+    }
+  ]
+}

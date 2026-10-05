@@ -1,0 +1,29 @@
+{
+  "name": "tactical-arena",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build",
+    "check": "tsc --noEmit",
+    "test:e2e": "node scripts/test-browser.mjs",
+    "test:unit": "vitest run",
+    "format:check": "prettier --check src tests *.ts *.json index.html scripts"
+  },
+  "dependencies": {
+    "@fontsource/barlow-condensed": "^5.2.7",
+    "@fontsource/inter": "^5.2.8",
+    "three": "^0.180.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.1",
+    "@sparticuz/chromium": "^153.0.0",
+    "@types/three": "^0.180.0",
+    "prettier": "^3.9.9",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.7",
+    "vitest": "^3.2.7"
+  }
+}

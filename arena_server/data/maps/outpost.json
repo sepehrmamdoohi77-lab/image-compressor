@@ -1,0 +1,344 @@
+{
+  "id": "outpost",
+  "name": "OUTPOST",
+  "sector": "07",
+  "size": 44,
+  "description": "An urban logistics yard. Three distinct routes, a contested central courtyard, and separated team staging areas.",
+  "spawns": {
+    "blue": [
+      {
+        "x": -4,
+        "z": 18
+      },
+      {
+        "x": -1.4,
+        "z": 18
+      },
+      {
+        "x": 1.4,
+        "z": 18
+      },
+      {
+        "x": 4,
+        "z": 18
+      }
+    ],
+    "red": [
+      {
+        "x": 4,
+        "z": -18
+      },
+      {
+        "x": 1.4,
+        "z": -18
+      },
+      {
+        "x": -1.4,
+        "z": -18
+      },
+      {
+        "x": -4,
+        "z": -18
+      }
+    ]
+  },
+  "obstacles": [
+    {
+      "id": "b01",
+      "kind": "building",
+      "x": -18.4,
+      "z": -8.7,
+      "w": 5,
+      "d": 9,
+      "h": 5.4,
+      "tone": "sand"
+    },
+    {
+      "id": "b02",
+      "kind": "building",
+      "x": 18.4,
+      "z": 7.8,
+      "w": 5,
+      "d": 10,
+      "h": 4.5,
+      "tone": "gray"
+    },
+    {
+      "id": "b03",
+      "kind": "building",
+      "x": -18.4,
+      "z": 9,
+      "w": 5,
+      "d": 7,
+      "h": 4,
+      "tone": "gray"
+    },
+    {
+      "id": "b04",
+      "kind": "building",
+      "x": 18.4,
+      "z": -10,
+      "w": 5,
+      "d": 7,
+      "h": 5,
+      "tone": "sand"
+    },
+    {
+      "id": "c01",
+      "kind": "container",
+      "x": -8,
+      "z": -10.4,
+      "w": 3,
+      "d": 7,
+      "h": 2.5,
+      "tone": "olive"
+    },
+    {
+      "id": "c02",
+      "kind": "container",
+      "x": 8,
+      "z": 10.4,
+      "w": 3,
+      "d": 7,
+      "h": 2.5,
+      "tone": "gray"
+    },
+    {
+      "id": "c03",
+      "kind": "container",
+      "x": -8,
+      "z": 9,
+      "w": 3,
+      "d": 5,
+      "h": 2.5,
+      "tone": "gray"
+    },
+    {
+      "id": "c04",
+      "kind": "container",
+      "x": 8,
+      "z": -9,
+      "w": 3,
+      "d": 5,
+      "h": 2.5,
+      "tone": "olive"
+    },
+    {
+      "id": "w01",
+      "kind": "wall",
+      "x": -4.8,
+      "z": 14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "w02",
+      "kind": "wall",
+      "x": 4.8,
+      "z": -14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "w03",
+      "kind": "wall",
+      "x": -11.8,
+      "z": 0,
+      "w": 0.6,
+      "d": 6,
+      "h": 2.2,
+      "tone": "gray"
+    },
+    {
+      "id": "w04",
+      "kind": "wall",
+      "x": 11.8,
+      "z": -1,
+      "w": 0.6,
+      "d": 7,
+      "h": 2.2,
+      "tone": "gray"
+    },
+    {
+      "id": "w05",
+      "kind": "wall",
+      "x": -2.5,
+      "z": -4,
+      "w": 5,
+      "d": 0.5,
+      "h": 1.5,
+      "tone": "gray"
+    },
+    {
+      "id": "w06",
+      "kind": "wall",
+      "x": 2.5,
+      "z": 4,
+      "w": 5,
+      "d": 0.5,
+      "h": 1.5,
+      "tone": "gray"
+    },
+    {
+      "id": "v01",
+      "kind": "vehicle",
+      "x": 14,
+      "z": 4.8,
+      "w": 2.2,
+      "d": 4.4,
+      "h": 1.6,
+      "tone": "olive"
+    },
+    {
+      "id": "v02",
+      "kind": "vehicle",
+      "x": -14,
+      "z": -4.8,
+      "w": 2.2,
+      "d": 4.4,
+      "h": 1.6,
+      "tone": "sand"
+    },
+    {
+      "id": "q01",
+      "kind": "crate",
+      "x": -1,
+      "z": 0,
+      "w": 1.4,
+      "d": 1.4,
+      "h": 1.1,
+      "tone": "olive"
+    },
+    {
+      "id": "q02",
+      "kind": "crate",
+      "x": 0.4,
+      "z": 0,
+      "w": 1.2,
+      "d": 1.2,
+      "h": 0.85,
+      "tone": "sand"
+    },
+    {
+      "id": "q03",
+      "kind": "crate",
+      "x": -13.8,
+      "z": 9,
+      "w": 1.5,
+      "d": 1.5,
+      "h": 1.3,
+      "tone": "sand"
+    },
+    {
+      "id": "q04",
+      "kind": "crate",
+      "x": -13.8,
+      "z": 10.6,
+      "w": 1.5,
+      "d": 1.5,
+      "h": 0.9,
+      "tone": "sand"
+    },
+    {
+      "id": "q05",
+      "kind": "crate",
+      "x": 13.8,
+      "z": -4.8,
+      "w": 1.5,
+      "d": 1.5,
+      "h": 1.3,
+      "tone": "olive"
+    },
+    {
+      "id": "q06",
+      "kind": "crate",
+      "x": -4.5,
+      "z": -9,
+      "w": 1.4,
+      "d": 1.4,
+      "h": 1.1,
+      "tone": "olive"
+    },
+    {
+      "id": "q07",
+      "kind": "crate",
+      "x": 4.5,
+      "z": 9,
+      "w": 1.4,
+      "d": 1.4,
+      "h": 1.1,
+      "tone": "olive"
+    },
+    {
+      "id": "a01",
+      "kind": "barrier",
+      "x": -3,
+      "z": 8,
+      "w": 2.8,
+      "d": 0.75,
+      "h": 0.95,
+      "tone": "gray"
+    },
+    {
+      "id": "a02",
+      "kind": "barrier",
+      "x": 3,
+      "z": -8,
+      "w": 2.8,
+      "d": 0.75,
+      "h": 0.95,
+      "tone": "gray"
+    },
+    {
+      "id": "a03",
+      "kind": "barrier",
+      "x": 13.8,
+      "z": 11.8,
+      "w": 3,
+      "d": 0.75,
+      "h": 0.95,
+      "tone": "gray"
+    },
+    {
+      "id": "a04",
+      "kind": "barrier",
+      "x": -13.8,
+      "z": -12,
+      "w": 3,
+      "d": 0.75,
+      "h": 0.95,
+      "tone": "gray"
+    },
+    {
+      "id": "s01",
+      "kind": "sandbags",
+      "x": -5,
+      "z": 2,
+      "w": 2.6,
+      "d": 0.8,
+      "h": 0.85,
+      "tone": "sand"
+    },
+    {
+      "id": "s02",
+      "kind": "sandbags",
+      "x": 5,
+      "z": -2,
+      "w": 2.6,
+      "d": 0.8,
+      "h": 0.85,
+      "tone": "sand"
+    }
+  ],
+  "theme": {
+    "sky": "#949e99",
+    "ground": "#adae9f",
+    "road": "#545f5c",
+    "metal": "#607467",
+    "trim": "#c3b9a0"
+  }
+}

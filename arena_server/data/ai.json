@@ -1,0 +1,5 @@
+{
+  "easy":{"reaction":0.7,"aimError":0.065,"awareness":20,"aggression":0.35,"lead":0.0,"grenades":false},
+  "normal":{"reaction":0.38,"aimError":0.027,"awareness":29,"aggression":0.6,"lead":0.07,"grenades":true},
+  "hard":{"reaction":0.2,"aimError":0.012,"awareness":36,"aggression":0.85,"lead":0.13,"grenades":true}
+}

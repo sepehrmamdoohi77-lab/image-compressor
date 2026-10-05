@@ -1,0 +1,204 @@
+{
+  "id": "rail-depot",
+  "name": "RAIL DEPOT",
+  "sector": "04",
+  "size": 44,
+  "theme": {
+    "sky": "#a9b6bc",
+    "ground": "#b0b6b6",
+    "road": "#596873",
+    "metal": "#547082",
+    "trim": "#c7cabd"
+  },
+  "description": "Long offset freight cars create rail-side firing lines. Mid-yard barriers break the quickest central route.",
+  "spawns": {
+    "blue": [
+      {
+        "x": -4,
+        "z": 18
+      },
+      {
+        "x": -1.4,
+        "z": 18
+      },
+      {
+        "x": 1.4,
+        "z": 18
+      },
+      {
+        "x": 4,
+        "z": 18
+      }
+    ],
+    "red": [
+      {
+        "x": 4,
+        "z": -18
+      },
+      {
+        "x": 1.4,
+        "z": -18
+      },
+      {
+        "x": -1.4,
+        "z": -18
+      },
+      {
+        "x": -4,
+        "z": -18
+      }
+    ]
+  },
+  "obstacles": [
+    {
+      "id": "rai-00",
+      "kind": "wall",
+      "x": -4.8,
+      "z": 14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "rai-01",
+      "kind": "wall",
+      "x": 4.8,
+      "z": -14.5,
+      "w": 6,
+      "d": 0.6,
+      "h": 1.8,
+      "tone": "sand"
+    },
+    {
+      "id": "rai-02",
+      "kind": "container",
+      "x": -7,
+      "z": 0,
+      "w": 3,
+      "d": 14,
+      "h": 2.7,
+      "tone": "gray"
+    },
+    {
+      "id": "rai-03",
+      "kind": "container",
+      "x": 7,
+      "z": 0,
+      "w": 3,
+      "d": 14,
+      "h": 2.7,
+      "tone": "olive"
+    },
+    {
+      "id": "rai-04",
+      "kind": "building",
+      "x": -18,
+      "z": -9,
+      "w": 5,
+      "d": 7,
+      "h": 4.2,
+      "tone": "gray"
+    },
+    {
+      "id": "rai-05",
+      "kind": "building",
+      "x": 18,
+      "z": 9,
+      "w": 5,
+      "d": 7,
+      "h": 4.2,
+      "tone": "gray"
+    },
+    {
+      "id": "rai-06",
+      "kind": "barrier",
+      "x": 0,
+      "z": -8,
+      "w": 3,
+      "d": 0.8,
+      "h": 1,
+      "tone": "gray"
+    },
+    {
+      "id": "rai-07",
+      "kind": "barrier",
+      "x": 0,
+      "z": 8,
+      "w": 3,
+      "d": 0.8,
+      "h": 1,
+      "tone": "gray"
+    },
+    {
+      "id": "rai-08",
+      "kind": "sandbags",
+      "x": 0,
+      "z": 0,
+      "w": 2.8,
+      "d": 1,
+      "h": 0.85,
+      "tone": "sand"
+    },
+    {
+      "id": "rai-09",
+      "kind": "crate",
+      "x": -13,
+      "z": 7,
+      "w": 1.6,
+      "d": 1.6,
+      "h": 1.2,
+      "tone": "olive"
+    },
+    {
+      "id": "rai-10",
+      "kind": "crate",
+      "x": 13,
+      "z": -7,
+      "w": 1.6,
+      "d": 1.6,
+      "h": 1.2,
+      "tone": "olive"
+    },
+    {
+      "id": "rai-11",
+      "kind": "wall",
+      "x": -13,
+      "z": -6,
+      "w": 0.6,
+      "d": 5,
+      "h": 1.8,
+      "tone": "gray"
+    },
+    {
+      "id": "rai-12",
+      "kind": "wall",
+      "x": 13,
+      "z": 6,
+      "w": 0.6,
+      "d": 5,
+      "h": 1.8,
+      "tone": "gray"
+    },
+    {
+      "id": "rai-13",
+      "kind": "vehicle",
+      "x": -18,
+      "z": 10,
+      "w": 2.2,
+      "d": 4.3,
+      "h": 1.6,
+      "tone": "olive"
+    },
+    {
+      "id": "rai-14",
+      "kind": "vehicle",
+      "x": 18,
+      "z": -10,
+      "w": 2.2,
+      "d": 4.3,
+      "h": 1.6,
+      "tone": "olive"
+    }
+  ]
+}

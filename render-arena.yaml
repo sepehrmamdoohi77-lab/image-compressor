@@ -1,0 +1,18 @@
+# Separate from the preserved compressor deployment. This has not been deployed.
+services:
+  - type: web
+    name: tactical-arena
+    runtime: docker
+    dockerfilePath: ./Dockerfile.arena
+    healthCheckPath: /arena/api/ready
+    envVars:
+      - key: ARENA_AS_HOME
+        value: "1"
+      - key: ARENA_DB_PATH
+        value: /data/arena.sqlite3
+      - key: AUTH_SECRET_KEY
+        generateValue: true
+    disk:
+      name: arena-guest-storage
+      mountPath: /data
+      sizeGB: 1
